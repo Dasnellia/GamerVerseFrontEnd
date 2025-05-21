@@ -1,0 +1,60 @@
+:root {
+    --primary-color: #d10000;
+    --dark-color: #121212;
+    --light-dark: #1e1e1e;
+    --text-light: #f8f9fa;
+    --text-muted: #adb5bd;
+}
+
+body {
+    background-color: var(--dark-color);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+}
+
+.salesChartContainer{
+    height: 300px;
+}
+
+.main-content {
+    transition: margin-left 0.3s ease;
+}
+
+.logo-icon {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+.card {
+    background-color: var(--light-dark);
+    border: 1px solid #333;
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid #333;
+    font-weight: bold;
+}
+
+.stat-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+
+
+
+
+
+
+h5,h2 {
+    color: gainsboro;
+    
+}
