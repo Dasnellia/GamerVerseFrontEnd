@@ -7,12 +7,14 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/MejorValorados.css';
 
+
 import type { Juego as JuegoCompleto, Comentario } from './DetalleJuego';
 import DetalleJuego from './DetalleJuego';
 import { productosIniciales } from './DetalleJuego';
 
 import Logo from '../../imagenes/LogoRecuperarContraseña.png';
 import Footer from './Footer';
+import BarraNav from './BarraNavUser';
 
 function MejorValorados() {
     const [nombreBusqueda, setNombreBusqueda] = useState('');
@@ -102,82 +104,7 @@ function MejorValorados() {
 
     return (
         <div id="mejor-valorados-page-container">
-            <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-                <div className="container">
-                    <Link className="navbar-brand" to="/Inicio">
-                        <img src={Logo} alt="Game Verse Logo" width="45" className="rounded-circle border border-danger me-2" />
-                        Game Verse
-                    </Link>
-
-                    <form className="d-flex mx-auto position-relative w-50" id="barraBusquedaContainer">
-                        <input
-                            ref={referenciaBusqueda}
-                            className="form-control me-2"
-                            type="search"
-                            placeholder="Buscar juegos..."
-                            aria-label="Buscar"
-                            value={nombreBusqueda}
-                            onChange={manejarCambioNombre}
-                        />
-                        {/* CAMBIO AQUÍ: Añadida la clase 'btn-sm' al botón de Buscar */}
-                        <button className="btn btn-outline-light btn-sm me-4" type="button" onClick={manejarClickBuscar}>
-                            Buscar
-                        </button>
-
-                        {mostrarResultadosBusqueda && sugerenciasBusqueda.length > 0 && (
-                            <ul className="list-group position-absolute mt-2 w-100 bg-light border rounded shadow-sm" style={{ zIndex: 1000 }}>
-                                {sugerenciasBusqueda.map((juego) => (
-                                    <li
-                                        key={juego.id}
-                                        className="list-group-item list-group-item-action"
-                                        onClick={() => seleccionarSugerencia(juego.nombre)}
-                                    >
-                                        {juego.nombre}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </form>
-
-                    <Link className="btn btn-outline-light btn-sm me-4" to="/Perfil">
-                        <i className="bi bi-person-fill"></i> Mi Cuenta
-                    </Link>
-                </div>
-            </nav>
-
-            <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                <div className="container">
-                    <div className="w-100">
-                        <ul className="nav justify-content-center">
-                            <Dropdown className="nav-item">
-                                <Dropdown.Toggle variant="dark" className="nav-link" style={{ backgroundColor: 'transparent' }}>
-                                    Inicio
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu>
-                                    <Dropdown.Item as={Link} to="/Inicio">Destacados</Dropdown.Item>
-                                    <Dropdown.Item as={Link} to="/Inicio">Ofertas</Dropdown.Item>
-                                    <Dropdown.Item as={Link} to="/Inicio">Próximos lanzamientos</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                            <li className="nav-item"><Link className="nav-link" to="/Catalogo">Catálogo</Link></li>
-                            <Dropdown className="nav-item">
-                                <Dropdown.Toggle variant="dark" className="nav-link" style={{ backgroundColor: 'transparent' }}>
-                                    Plataformas
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu>
-                                    <Dropdown.Item as={Link} to="/Catalogo">PC</Dropdown.Item>
-                                    <Dropdown.Item as={Link} to="/Catalogo">Play Station 5</Dropdown.Item>
-                                    <Dropdown.Item as={Link} to="/Catalogo">Xbox</Dropdown.Item>
-                                    <Dropdown.Item as={Link} to="/Catalogo">Nintendo Switch</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                            <li className="nav-item"><Link className="nav-link" to="/MasVendidos">Más vendidos</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/MejorValorados">Mejor valorados</Link></li>
-                            <li className="nav-item"><Link className="nav-link" to="/Carrito"><i className="bi bi-cart-fill"></i> Carrito</Link></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
+            <BarraNav />
 
             <div className="container mt-4">
                 <h1 className="mb-4 page-title">Juegos Mejor Valorados</h1>

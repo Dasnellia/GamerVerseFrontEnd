@@ -58,6 +58,22 @@
     font-size: 0.85rem !important;
 }
 
+#catalogo-layout {
+  display: flex;
+  align-items: flex-start;
+}
+
+#catalogo-page-container .filtro-lateral {
+  width: 260px;
+  min-width: 220px;
+  background: #232323;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-right: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+
 /* Asegurar que los estilos generales de btn-outline-light no sean más específicos */
 #catalogo-page-container .btn-outline-light {
     color: var(--text-light);

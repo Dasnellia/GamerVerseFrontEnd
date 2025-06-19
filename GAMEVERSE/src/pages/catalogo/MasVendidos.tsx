@@ -1,58 +1,45 @@
-import BarraNav from "./BarraNavUser";
+
 import BarraCarrito from "../carrito/BarraCarrito";
 import Footer from "./Footer";
-import EldenRing from "../../imagenes/Juegos/EldenRing.png";
-import ZeldaTears from "../../imagenes/Juegos/LoZTofk.jpg";
-import GodOfWar from "../../imagenes/Juegos/god-of-war.jpg";
-import HogwartsLegacy from "../../imagenes/Juegos/hogwartlegacy.jpeg";
-import Starfield from "../../imagenes/Juegos/Starfield.webp";
+import { useState } from "react";
+
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import "bootstrap/dist/js/bootstrap.bundle.min";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import 'rc-slider/assets/index.css';
+
 import "../../css/MasVendidos.css";
-import "../../css/Inicio.css";
-import "../../css/Catalogo.css";
-import "rc-slider/assets/index.css";
+import BarraNav from "./BarraNavUser";
+
+
+
 import DetalleJuego, {
   productosIniciales,
   type Comentario,
 } from "./DetalleJuego";
+
 import type { Juego as JuegoCompleto } from "./DetalleJuego";
 
-const Paginacion = ({ paginaActual, totalPaginas, onCambiarPagina }) => (
-  <nav className="mt-4" aria-label="Paginación de juegos">
-    <ul className="pagination justify-content-center">
-      <li className={`page-item ${paginaActual === 1 ? "disabled" : ""}`}>
-        <button className="page-link" onClick={() => onCambiarPagina(paginaActual - 1)}>Anterior</button>
-      </li>
-      {[...Array(totalPaginas)].map((_, i) => (
-        <li key={i} className={`page-item ${paginaActual === i + 1 ? "active" : ""}`}>
-          <button className="page-link" onClick={() => onCambiarPagina(i + 1)}>{i + 1}</button>
-        </li>
-      ))}
-      <li className={`page-item ${paginaActual === totalPaginas ? "disabled" : ""}`}>
-        <button className="page-link" onClick={() => onCambiarPagina(paginaActual + 1)}>Siguiente</button>
-      </li>
-    </ul>
-  </nav>
-);
 
-const DibujarEstrellas = (rating) => {
+const DibujarEstrellas = (rating: number) => {
   const totalestrella = Math.floor(rating);
   const mediaestrella = rating % 1 >= 0.5;
   const sinestrellas = 5 - totalestrella - (mediaestrella ? 1 : 0);
 
   return (
     <>
+    
       {Array(totalestrella)
-        .fill()
+        .fill(null)
         .map((_, i) => (
           <i key={`full-${i}`} className="bi bi-star-fill"></i>
         ))}
       {mediaestrella && <i className="bi bi-star-half"></i>}
       {Array(sinestrellas)
-        .fill()
+        .fill(null)
         .map((_, i) => (
           <i key={`empty-${i}`} className="bi bi-star"></i>
         ))}
@@ -60,8 +47,9 @@ const DibujarEstrellas = (rating) => {
   );
 };
 
-const FilasPorJuego = (juegos) => {
-  return juegos.map((juego, index) => (
+
+const FilasPorJuego = (juegos: JuegoCompleto[]) => {
+  return juegos.map((juego: JuegoCompleto, index: number) => (
     <tr key={juego.id}>
       <th scope="row">{index + 1}</th>
       <td>
@@ -72,7 +60,7 @@ const FilasPorJuego = (juegos) => {
       </td>
       <td>{juego.generos.join(", ")}</td>
       <td>
-        {juego.plataformas.map((plat, idx) => (
+        {juego.plataformas.map((plat: string, idx: number) => (
           <span key={idx} className="badge bg-secondary platform-badge">
             {plat}
           </span>
@@ -123,7 +111,7 @@ const MasVendidos = () => {
           </table>
         </div>
 
-         <Paginacion paginaActual={1} totalPaginas={3} onCambiarPagina={() => {}} />
+         
       </div>
 
       <div>
@@ -131,6 +119,7 @@ const MasVendidos = () => {
         <Footer />
       </div>
     </div>
+
   );
 };
 

@@ -15,6 +15,7 @@ import Slider from 'rc-slider';
 
 // Importar el componente Dropdown de react-bootstrap
 import { Dropdown } from 'react-bootstrap';
+import BarraNav from './BarraNavUser';
 
 
 function Catalogo() {
@@ -153,98 +154,9 @@ function Catalogo() {
 
   // --- Renderizado del Componente ---
   return (
-    <div id="catalogo-page-container"> {/* El nuevo contenedor principal */}
-      {/* Barra de navegación superior (sin cambios, ya era similar a Inicio) */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <div className="container">
-          <Link className="navbar-brand" to="/Inicio">
-            <img src={Logo} alt="Game Verse Logo" width="45" className="rounded-circle border border-danger" /> Game Verse
-          </Link>
-
-          <form className="d-flex mx-auto position-relative w-50" id="barraBusquedaContainer">
-            <button className="btn btn-outline-light me-2" type="button" onClick={alternarFiltroLateral}>
-              <i className="bi bi-sliders"></i>
-            </button>
-            <input
-              ref={refBusqueda}
-              className="form-control me-4"
-              type="search"
-              placeholder="Buscar juegos..."
-              aria-label="Buscar"
-              value={nombreBusqueda}
-              onChange={handleCambioNombreBusqueda}
-            />
-            <button className="btn btn-outline-light" type="button" onClick={handleClicBuscar}>
-              Buscar
-            </button>
-
-            {mostrarSugerenciasBusqueda && sugerenciasBusqueda.length > 0 && (
-              <ul className="list-group position-absolute mt-2 w-100 bg-light border rounded shadow-sm" style={{ zIndex: 1000, top: '100%' }}>
-                {sugerenciasBusqueda.map(producto => (
-                  <li
-                    key={producto.id}
-                    className="list-group-item list-group-item-action"
-                    onClick={() => seleccionarSugerenciaBusqueda(producto.nombre)}
-                  >
-                    {producto.nombre}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </form>
-
-          <Link className="btn btn-sm btn-outline-light" to="/Perfil">
-            <i className="bi bi-person-fill" style={{ fontStyle: 'normal' }}> Mi Cuenta </i>
-          </Link>
-        </div>
-      </nav>
-
-      {/* Segunda barra de navegación con dropdowns (MODIFICADA para usar react-bootstrap) */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container">
-          <div className="w-100">
-            <ul className="nav justify-content-center">
-              {/* Dropdown "Inicio" con react-bootstrap */}
-              <Dropdown as="li" className="nav-item">
-                <Dropdown.Toggle as={Link} to="#" className="nav-link">
-                  Inicio
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item as={Link} to="/Inicio">Destacados</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Inicio">Ofertas</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Inicio">Próximos lanzamientos</Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-              {/* Enlace directo "Catálogo" */}
-              <li className="nav-item">
-                <Link className="nav-link" to="/Catalogo">Catálogo</Link>
-              </li>
-              {/* Dropdown "Plataformas" con react-bootstrap */}
-              <Dropdown as="li" className="nav-item">
-                <Dropdown.Toggle as={Link} to="#" className="nav-link">
-                  Plataformas
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item as={Link} to="/Catalogo?platform=PC">PC</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Catalogo?platform=PS5">PlayStation 5</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Catalogo?platform=XBOX">Xbox Series X</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Catalogo?platform=SWITCH">Nintendo Switch</Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-              {/* Enlaces directos */}
-              <li className="nav-item">
-                <Link className="nav-link" to="/MasVendidos">Más vendidos</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/MejorValorados">Mejor valorados</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/Carrito"><i className="bi bi-cart-fill" style={{ fontSize: '1em', marginRight: '0.1em' }}></i> Carrito</Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+    <div id="catalogo-page-container"> 
+      
+      <BarraNav onAbrirFiltroLateral={() => setMostrarFiltroLateral(v => !v)} />
 
       <div className="container-fluid mt-4">
         <div className="row">

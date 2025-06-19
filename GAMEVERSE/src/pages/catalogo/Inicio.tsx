@@ -20,6 +20,7 @@ import Banner1 from '../../imagenes/Verano.png';
 import Banner2 from '../../imagenes/Promo.png';
 import Banner3 from '../../imagenes/Juego-Nuevo.png';
 import Logo from '../../imagenes/LogoRecuperarContraseña.png';
+import BarraNav from './BarraNavUser';
 
 // Interfaz para la información básica de un juego
 interface JuegoBasico {
@@ -148,94 +149,7 @@ function Inicio() {
 
   return (
     <div id="inicio-page-container">
-      {/* Barra de navegación superior */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <div className="container">
-          <Link className="navbar-brand" to="/Inicio">
-            <img src={Logo} alt="Game Verse Logo" width="45" className="rounded-circle border border-danger" /> Game Verse
-          </Link>
-
-          {/* Barra de búsqueda con sugerencias */}
-          <form className="d-flex mx-auto position-relative w-50" id="barraBusquedaContainer">
-            <input
-              ref={referenciaBusqueda}
-              className="form-control me-4"
-              type="search"
-              placeholder="Buscar juegos..."
-              aria-label="Buscar"
-              value={nombreBusqueda}
-              onChange={manejarCambioNombre}
-            />
-            <button className="btn btn-outline-light" type="button" onClick={manejarClickBuscar}>
-              Buscar
-            </button>
-
-            {/* Sugerencias de búsqueda */}
-            {mostrarResultadosBusqueda && sugerenciasBusqueda.length > 0 && (
-              <ul className="list-group position-absolute w-100 bg-light border rounded shadow-sm" style={{ zIndex: 1000 }}>
-                {sugerenciasBusqueda.map(juego => (
-                  <li
-                    key={juego.id}
-                    className="list-group-item list-group-item-action"
-                    onClick={() => seleccionarSugerencia(juego.nombre)}
-                  >
-                    {juego.nombre}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </form>
-
-          {/* Botón Mi Cuenta */}
-          <Link className="btn btn-sm btn-outline-light" to="/Perfil">
-            <i className="bi bi-person-fill" style={{ fontStyle: 'normal' }}> Mi Cuenta </i>
-          </Link>
-        </div>
-      </nav>
-
-      {/* Barra de navegación secundaria */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container">
-          <div className="w-100">
-            <ul className="nav justify-content-center">
-              <Dropdown>
-                <Dropdown.Toggle>
-                  Inicio
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item as={Link} to="/Inicio">Destacados</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Inicio">Ofertas</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Inicio">Próximos lanzamientos</Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-              <li className="nav-item">
-                <Link className="nav-link" to="/Catalogo">Catálogo</Link>
-              </li>
-              <Dropdown>
-                <Dropdown.Toggle>
-                  Plataformas
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item as={Link} to="/Catalogo">PC</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Catalogo">Play Station 5</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Catalogo">Xbox</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/Catalogo">Nintendo Switch</Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-              <li className="nav-item">
-                <Link className="nav-link" to="/MasVendidos">Más vendidos</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/MejorValorados">Mejor valorados</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/Carrito"><i className="bi bi-cart-fill"></i>Carrito</Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
+      <BarraNav />
       {/* Contenido principal */}
       <div className="container-fluid mt-4">
         <div className="row">

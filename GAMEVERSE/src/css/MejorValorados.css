@@ -3,11 +3,16 @@
     --dark-color: #121212;
     --light-dark: #1e1e1e;
     --text-light: #f8f9fa;
-    --text-muted: #fdfdfd1e;
+    --text-muted-filter: #bbb; /* Usado para texto más tenue en filtros/precios */
+    --input-bg: #333;
+    --input-border: #444;
 
     background-color: var(--dark-color);
     color: var(--text-light);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 #mejor-valorados-page-container .navbar.navbar-dark.bg-dark {
