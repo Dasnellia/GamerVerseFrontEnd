@@ -9,20 +9,22 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/Inicio.css';
 import { Dropdown } from 'react-bootstrap';
 
-// Componentes y Tipos
+
 import Footer from './Footer';
 import type { Juego as JuegoCompleto, Comentario } from './DetalleJuego';
 import DetalleJuego from './DetalleJuego';
 import { productosIniciales } from './DetalleJuego';
 
-// Importar imágenes de banners y logo
+
 import Banner1 from '../../imagenes/Verano.png';
 import Banner2 from '../../imagenes/Promo.png';
 import Banner3 from '../../imagenes/Juego-Nuevo.png';
 import Logo from '../../imagenes/LogoRecuperarContraseña.png';
 import BarraNav from './BarraNavUser';
 
-// Interfaz para la información básica de un juego
+const URL = "http://localhost:5000" 
+
+
 interface JuegoBasico {
   id: number;
   nombre: string;
@@ -42,16 +44,21 @@ const juegosIniciales: JuegoBasico[] = productosIniciales.map(juego => ({
   descuento: juego.descuento,
   rating: juego.rating,
   imagen: juego.imagen,
-  descripcion: juego.descripcion
+  descripcion: juego.descripcion 
 }));
 
-function Inicio() {
+const Inicio = () => {
+  
+  const [ lista, setLista ] = useState<JuegoCompleto[]>([])
+
+  const httpsobtenerJuegos = (): JuegoBasico[] => {
+    const juegosGuardados = localStorage.getItem('juegos');
+    return juegosGuardados ? JSON.parse(juegosGuardados) : juegosIniciales;
+  }
+
   const [nombreBusqueda, setNombreBusqueda] = useState('');
   const [juegosFiltrados, setJuegosFiltrados] = useState<JuegoBasico[]>(juegosIniciales);
-  const referenciaBusqueda = useRef<HTMLInputElement>(null);
   const [juegoSeleccionado, setJuegoSeleccionado] = useState<JuegoCompleto | null>(null);
-  const [sugerenciasBusqueda, setSugerenciasBusqueda] = useState<JuegoBasico[]>([]);
-  const [mostrarResultadosBusqueda, setMostrarResultadosBusqueda] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
 
   const abrirModal = (juegoId: number) => {
@@ -120,28 +127,8 @@ function Inicio() {
     setJuegosFiltrados(nuevosJuegosFiltrados);
   };
 
-  const manejarCambioNombre = (evento: ChangeEvent<HTMLInputElement>) => {
-    const nuevoNombre = evento.target.value;
-    setNombreBusqueda(nuevoNombre);
 
-    const nuevasSugerencias = juegosIniciales.filter(juego =>
-      juego.nombre.toLowerCase().includes(nuevoNombre.toLowerCase()) && nuevoNombre.length > 0
-    );
-    setSugerenciasBusqueda(nuevasSugerencias);
-    setMostrarResultadosBusqueda(nuevasSugerencias.length > 0);
-  };
 
-  const manejarClickBuscar = () => {
-    filtrarJuegos();
-    setMostrarResultadosBusqueda(false);
-  };
-
-  const seleccionarSugerencia = (nombreSugerencia: string) => {
-    setNombreBusqueda(nombreSugerencia);
-    setSugerenciasBusqueda([]);
-    setMostrarResultadosBusqueda(false);
-    filtrarJuegos();
-  };
 
   useEffect(() => {
     filtrarJuegos();
@@ -149,13 +136,12 @@ function Inicio() {
 
   return (
     <div id="inicio-page-container">
-      <BarraNav />
-      {/* Contenido principal */}
+      <BarraNav onAbrirFiltroLateral={() => {}}/>
       <div className="container-fluid mt-4">
         <div className="row">
-          {/* Listado de juegos */}
+          
           <div className="col">
-            {/* Carrusel de Banners */}
+            
             <div className="container">
               <div id="carouselExample" className="carousel slide" data-bs-ride="carousel">
                 <div className="carousel-inner rounded">
@@ -192,7 +178,7 @@ function Inicio() {
               </div>
             </div>
 
-            {/* Título y listado de juegos destacados */}
+            
             <div className="container mt-5">
               <h1 className="page-title">Juegos Destacados</h1>
               <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
@@ -267,7 +253,7 @@ function Inicio() {
         </div>
       </div>
 
-      {/* Modal de detalles del juego */}
+      
       {juegoSeleccionado && (
         <DetalleJuego
           juego={juegoSeleccionado}

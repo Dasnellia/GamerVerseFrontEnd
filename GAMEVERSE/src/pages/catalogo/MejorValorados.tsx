@@ -104,7 +104,7 @@ function MejorValorados() {
 
     return (
         <div id="mejor-valorados-page-container">
-            <BarraNav />
+            <BarraNav onAbrirFiltroLateral={() => {}}/>
 
             <div className="container mt-4">
                 <h1 className="mb-4 page-title">Juegos Mejor Valorados</h1>

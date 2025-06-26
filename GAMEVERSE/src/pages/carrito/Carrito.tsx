@@ -68,7 +68,7 @@ function CarritoPage() {
   return (
     <div className="inicio-page">
       {/* Navbar */}
-      <BarraNav />
+      <BarraNav onAbrirFiltroLateral={() => {}} />
 
       {/* Contenido principal */}
       <div className="contenedor-principal">

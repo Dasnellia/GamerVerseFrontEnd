@@ -85,7 +85,7 @@ const FilasPorJuego = (juegos: JuegoCompleto[]) => {
 const MasVendidos = () => {
   return (
     <div id="mas-vendidos-page-container">
-      <BarraNav />
+      <BarraNav onAbrirFiltroLateral={() => {}} />
 
       <div className="container mt-4">
         <h1 className="page-title">
