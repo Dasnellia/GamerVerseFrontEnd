@@ -14,7 +14,8 @@ function Perfil() {
   const [nombre, setNombre] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [correoElectronico, setCorreoElectronico] = useState('');
-
+  const [usuarioId, setUsuarioId] = useState(1); //por ahora usuario id = 1
+  
   const navegar = useNavigate();
 
   // Manejadores de eventos
@@ -35,14 +36,38 @@ function Perfil() {
     }
   };
 
-  const manejarGuardarCambios = (evento: FormEvent<HTMLButtonElement>) => {
+  // Función para enviar la solicitud de actualización del perfil
+  const manejarGuardarCambios = async (evento: FormEvent<HTMLButtonElement>) => {
     evento.preventDefault();
-    setModalVisible(true);
+  
+    try {
+      const response = await fetch(`http://localhost:3001/api/usuarios/${usuarioId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre,
+          apellidos,
+          correoElectronico,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        setModalVisible(true); // Mostrar modal de éxito
+      } else {
+        console.error('Error al editar la información del usuario:', data.error);
+      }
+    } catch (error) {
+      console.error('Error al enviar la solicitud de actualización:', error);
+    }
   };
 
   const manejarCierreModal = () => {
     setModalVisible(false);
-    navegar('/inicio');
+    navegar('/inicio'); // Redirige a la página de inicio después de guardar los cambios
   };
 
   // Renderizado del componente

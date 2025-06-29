@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import '../../css/DetalleJuego.css';
 import { handleAgregarAlCarrito } from '../carrito/DetalleCarrito';
@@ -655,48 +655,84 @@ interface DetalleJuegoProps {
   usuarioId: number;
 }
 
-interface Usuario {
-  id: number;
-  juegosComprados: number[];
-}
-
-// Lista de usuarios con los juegos que han comprado
-const usuarios: Usuario[] = [
-  { id: 1, juegosComprados: [1, 3, 5] },
-  { id: 2, juegosComprados: [2, 4] },
-  { id: 3, juegosComprados: [6, 7, 8] }
-];
-
-// Función para comprobar si el usuario ha comprado el juego
-const hasPurchased = (usuarioId: number, juegoId: number): boolean => {
-  const user = usuarios.find(u => u.id === usuarioId);
-  return user ? user.juegosComprados.includes(juegoId) : false;
-};
-
 function DetalleJuego({ juego, show, onHide, onAddComment, usuarioId }: DetalleJuegoProps) {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [usuarioRating, setUsuarioRating] = useState(5);
-
-  if (!juego) return null;
+  const [isPurchased, setIsPurchased] = useState<boolean | null>(null);
   
-  const isPurchased = hasPurchased(usuarioId, juego.id);
+  if (!juego) return null;
 
+  // Efecto para comprobar si el juego ha sido comprado
+  useEffect(() => {
+    const checkPurchase = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/calificaciones/verificarCompra', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            Usuario_UsuarioID: usuarioId,
+            Juego_JuegoID: juego.id,
+          }),
+        });
+
+        if (response.ok) {
+          setIsPurchased(true); // Si la compra es exitosa, se actualiza el estado
+        } else {
+          setIsPurchased(false); // Si no ha sido comprado, se actualiza el estado
+        }
+      } catch (error) {
+        console.error('Error al verificar la compra:', error);
+        setIsPurchased(false); // Si ocurre un error, asumir que no se ha comprado
+      }
+    };
+
+    checkPurchase();
+  }, [usuarioId, juego.id]); // Ejecutar cuando el usuario o el juego cambian
 
   const handleRatingClick = (rating: number) => {
     setUsuarioRating(rating);
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (nuevoComentario.trim() === '') return;
     
-    onAddComment(juego.id, {
-      user: "Tú",
-      rating: usuarioRating,
-      text: nuevoComentario
-    });
-    
-    setNuevoComentario('');
+    try {
+      // Enviar la calificación al backend
+      const response = await fetch('http://localhost:3001/api/calificaciones/dejarCalificacion', { //nose si tendrá que cambiarse cuando subamos a la nube
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Usuario_UsuarioID: usuarioId, // ID del usuario
+          Juego_JuegoID: juego.id, // ID del juego
+          Valoracion: usuarioRating, // Puntuación
+          Comentario: nuevoComentario, // Comentario
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        // Llamar a la función onAddComment para actualizar los comentarios localmente
+        onAddComment(juego.id, {
+          user: "Tú",
+          rating: usuarioRating,
+          text: nuevoComentario,
+        });
+  
+        // Limpiar el comentario
+        setNuevoComentario('');
+      } else {
+        // Mostrar mensaje de error si no se pudo crear la calificación
+        console.error('Error al dejar la calificación:', data.error);
+      }
+    } catch (error) {
+      console.error('Error al enviar la reseña:', error);
+    }
   };
 
   return (
