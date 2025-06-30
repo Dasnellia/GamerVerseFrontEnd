@@ -287,3 +287,9 @@
     border-color: red;
     background-color: red;
 }
+
+#catalogo-page-container .new-price {
+  color: var(--primary-color);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
