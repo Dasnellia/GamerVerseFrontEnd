@@ -16,85 +16,6 @@
     display: flex;
     flex-direction: column;
 }
-#mas-vendidos-page-container .navbar.navbar-dark.bg-dark {
-    background-color: var(--dark-color) !important;
-    border-bottom: 1px solid var(--primary-color);
-}
-#mas-vendidos-page-container .navbar.navbar-light.bg-light {
-    background-color: var(--light-dark) !important;
-    border-bottom: 1px solid #333;
-    padding-top: 0.3rem !important;
-    padding-bottom: 0.3rem !important;
-}
-
-
-#mas-vendidos-page-container .nav-link,
-#mas-vendidos-page-container .dropdown-item {
-    color: var(--text-light) !important;
-    transition: color 0.3s ease;
-}
-
-#mas-vendidos-page-container .nav-link:hover,
-#mas-vendidos-page-container .dropdown-item:hover {
-    color: var(--primary-color) !important;
-}
-
-#mas-vendidos-page-container .dropdown-menu {
-    background-color: var(--light-dark);
-    border: 1px solid #333;
-}
-
-/* Estilos para el logo y la marca */
-#mas-vendidos-page-container .navbar-brand img {
-    width: 45px;
-    height: 45px;
-    object-fit: cover;
-    border: 2px solid var(--primary-color);
-    border-radius: 50%;
-}
-
-/* Estilos específicos para botones btn-outline-light en la navbar oscura */
-#mas-vendidos-page-container .navbar.bg-dark .btn-outline-light {
-    padding: 0.3rem 0.6rem !important;
-    font-size: 0.85rem !important;
-    line-height: 1.5 !important;
-}
-
-#mas-vendidos-page-container .navbar.bg-dark .btn-outline-light i {
-    font-size: 0.85rem !important;
-}
-
-#mas-vendidos-page-container .btn-outline-light {
-    color: var(--text-light);
-    border-color: var(--text-light);
-    transition: all 0.3s ease;
-}
-
-#mas-vendidos-page-container .btn-outline-light:hover {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--text-light);
-}
-
-#mas-vendidos-page-container .btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-#mas-vendidos-page-container .btn-primary:hover {
-    background-color: #b00000;
-    border-color: #b00000;
-}
-
-#mas-vendidos-page-container .btn-secondary {
-    background-color: #333;
-    border-color: #333;
-}
-
-#mas-vendidos-page-container .btn-secondary:hover {
-    background-color: #444;
-    border-color: #444;
-}
 
 .page-title {
     margin-bottom: 30px;
@@ -213,7 +134,6 @@
     background-color: #5a6268 !important;
     border-color: #5a6268 !important;
 }
-
 
 .pagination .page-item .page-link {
     background-color: var(--light-dark) !important;
