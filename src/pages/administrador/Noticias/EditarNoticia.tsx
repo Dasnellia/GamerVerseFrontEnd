@@ -5,7 +5,7 @@ import '../../../css/EditarNoticia.css';
 interface DetalleNoticia {
   id: number;
   foto?: string;
-  name: string;
+  titulo: string;
   descripcion: string;
 }
 
@@ -18,13 +18,13 @@ interface EditarNoticiaProps {
 }
 
 const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, onGuardar, show }) => {
-  const [name, setName] = useState<string>(noticiaActual?.name || '');
+  const [titulo, setName] = useState<string>(noticiaActual?.titulo || '');
   const [descripcion, setDescripcion] = useState<string>(noticiaActual?.descripcion || '');
   const [foto, setFoto] = useState<File | null>(null);
 
   useEffect(() => {
     if (noticiaActual) {
-      setName(noticiaActual.name);
+      setName(noticiaActual.titulo);
       setDescripcion(noticiaActual.descripcion);
       setFoto(null);
     } else {
@@ -40,7 +40,7 @@ const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, 
     if (noticiaActual) {
       onGuardar({
         ...noticiaActual,
-        name: name,
+        titulo: titulo,
         descripcion: descripcion,
         foto: foto ? foto.name : noticiaActual.foto
       });
@@ -60,7 +60,7 @@ const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, 
                 <Form.Label>Nombre</Form.Label>
                 <Form.Control
                   type="text"
-                  value={name}
+                  value={titulo}
                   onChange={(e) => setName(e.target.value)}
                   required
                   className="bg-secondary text-white"

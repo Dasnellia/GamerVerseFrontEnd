@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
+import type { CarritoItem } from '../carrito/DetalleCarrito'; 
+import { imagenes } from '../carrito/DetalleCarrito';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/Carrito.css';
-import type { CarritoItem } from '../carrito/DetalleCarrito'; 
-import { imagenes } from '../carrito/DetalleCarrito';
-import { useNavigate} from 'react-router-dom';
 
 import CarroVacio from '../../imagenes/CarroVacio.png';
 import BarraNav from '../catalogo/BarraNavUser';
@@ -68,7 +68,7 @@ function CarritoPage() {
   return (
     <div className="inicio-page">
       {/* Navbar */}
-      <BarraNav />
+      <BarraNav onAbrirFiltroLateral={() => {}}/>
 
       {/* Contenido principal */}
       <div className="contenedor-principal">
@@ -123,7 +123,7 @@ function CarritoPage() {
                             <button className="btn btn-sm" onClick={() => handleCantidadChange(item.id, item.cantidad + 1)}>+</button>
                           </div>
                         </td>
-                        <td className="text-end">S/ {(item.precio || 0 * item.cantidad).toFixed(2)}</td>
+                        <td className="text-end">S/ {((item.precio || 0) * item.cantidad).toFixed(2)}</td>
                         <td className="text-center">
                           <button className="btn btn-sm eliminar" onClick={() => handleEliminarItem(item.id)}>
                             <i className="bi bi-trash3"></i>

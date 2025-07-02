@@ -1,162 +1,59 @@
-import BarraCarrito from "../carrito/BarraCarrito";
-import { handleAgregarAlCarrito } from "../carrito/DetalleCarrito";
 import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import type { ChangeEvent } from "react";
-import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min";
 import "bootstrap-icons/font/bootstrap-icons.css";
-
-import "../../css/BarraNav.css";
 import { Dropdown } from "react-bootstrap";
 
-import type { Juego as JuegoCompleto, Comentario } from "./DetalleJuego";
-
-import { productosIniciales } from "./DetalleJuego";
-
+import "../../css/BarraNav.css";
 import Logo from "../../imagenes/LogoRecuperarContraseña.png";
+import type { Juego } from "./DetalleJuego";
 
-// Interfaz para la información básica de un juego
-interface JuegoBasico {
-  id: number;
-  nombre: string;
-  precio: number;
-  plataformas: string[];
-  descuento: number;
-  rating: number;
-  imagen: string;
-  descripcion?: string;
-}
-
-const juegosIniciales: JuegoBasico[] = productosIniciales.map((juego) => ({
-  id: juego.id,
-  nombre: juego.nombre,
-  precio: juego.precio,
-  plataformas: juego.plataformas,
-  descuento: juego.descuento,
-  rating: juego.rating,
-  imagen: juego.imagen,
-  descripcion: juego.descripcion,
-}));
-
-function BarraNav() {
+function BarraNav({ onAbrirFiltroLateral }: { onAbrirFiltroLateral: () => void }) {
+  const location = useLocation();
   const [nombreBusqueda, setNombreBusqueda] = useState("");
-  const [juegosFiltrados, setJuegosFiltrados] =
-    useState<JuegoBasico[]>(juegosIniciales);
-  const referenciaBusqueda = useRef<HTMLInputElement>(null);
-  const [juegoSeleccionado, setJuegoSeleccionado] =
-    useState<JuegoCompleto | null>(null);
-  const [sugerenciasBusqueda, setSugerenciasBusqueda] = useState<JuegoBasico[]>(
-    []
-  );
-  const [mostrarResultadosBusqueda, setMostrarResultadosBusqueda] =
-    useState(false);
-  const [mostrarModal, setMostrarModal] = useState(false);
-
-  const abrirModal = (juegoId: number) => {
-    const juegoCompleto = productosIniciales.find((p) => p.id === juegoId);
-    if (juegoCompleto) {
-      setJuegoSeleccionado(juegoCompleto);
-      setMostrarModal(true);
-    }
-  };
-
-  const cerrarModal = () => {
-    setMostrarModal(false);
-    setJuegoSeleccionado(null);
-  };
-
-  const agregarComentario = (
-    juegoId: number,
-    comentario: Omit<Comentario, "id" | "date">
-  ) => {
-    if (!juegoSeleccionado) return;
-
-    const juegoActualizado: JuegoCompleto = {
-      ...juegoSeleccionado,
-      comentarios: [
-        ...juegoSeleccionado.comentarios,
-        {
-          id: juegoSeleccionado.comentarios.length + 1,
-          ...comentario,
-          date: new Date().toISOString().split("T")[0],
-        },
-      ],
-    };
-
-    setJuegoSeleccionado(juegoActualizado);
-
-    const index = productosIniciales.findIndex((p) => p.id === juegoId);
-    if (index !== -1) {
-      productosIniciales[index] = juegoActualizado;
-    }
-  };
-
-  const parseFecha = (fecha: string): Date => {
-    const [dia, mes, anio] = fecha.split("-").map(Number);
-    return new Date(anio, mes - 1, dia);
-  };
-
-  const filtrarJuegos = () => {
-    const nombreFiltrado = nombreBusqueda.toLowerCase();
-
-    const nuevosJuegosFiltrados = productosIniciales
-      .filter((juego) => {
-        return juego.nombre.toLowerCase().includes(nombreFiltrado);
-      })
-      .sort((a, b) => {
-        return (
-          parseFecha(b.lanzamiento).getTime() -
-          parseFecha(a.lanzamiento).getTime()
-        );
-      })
-      .slice(0, 10)
-      .map((juego) => ({
-        id: juego.id,
-        nombre: juego.nombre,
-        precio: juego.precio,
-        plataformas: juego.plataformas,
-        descuento: juego.descuento,
-        rating: juego.rating,
-        imagen: juego.imagen,
-        descripcion: juego.descripcion,
-      }));
-
-    setJuegosFiltrados(nuevosJuegosFiltrados);
-  };
-
-  const manejarCambioNombre = (evento: ChangeEvent<HTMLInputElement>) => {
-    const nuevoNombre = evento.target.value;
-    setNombreBusqueda(nuevoNombre);
-
-    const nuevasSugerencias = juegosIniciales.filter(
-      (juego) =>
-        juego.nombre.toLowerCase().includes(nuevoNombre.toLowerCase()) &&
-        nuevoNombre.length > 0
-    );
-    setSugerenciasBusqueda(nuevasSugerencias);
-    setMostrarResultadosBusqueda(nuevasSugerencias.length > 0);
-  };
-
-  const manejarClickBuscar = () => {
-    filtrarJuegos();
-    setMostrarResultadosBusqueda(false);
-  };
-
-  const seleccionarSugerencia = (nombreSugerencia: string) => {
-    setNombreBusqueda(nombreSugerencia);
-    setSugerenciasBusqueda([]);
-    setMostrarResultadosBusqueda(false);
-    filtrarJuegos();
-  };
+  const [todosLosJuegos, setTodosLosJuegos] = useState<Juego[]>([]);
+  const [sugerencias, setSugerencias] = useState<Juego[]>([]);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    filtrarJuegos();
-  }, [nombreBusqueda]);
+    fetch("http://localhost:3001/api/juegos")
+      .then(res => res.json())
+      .then((data: Juego[]) => setTodosLosJuegos(data))
+      .catch(err => console.error("Error cargando juegos:", err));
+  }, []);
+
+  useEffect(() => {
+    if (nombreBusqueda.trim().length === 0) {
+      setSugerencias([]);
+      setMostrarSugerencias(false);
+      return;
+    }
+
+    const sugerenciasFiltradas = todosLosJuegos
+      .filter(j => j.nombre.toLowerCase().includes(nombreBusqueda.toLowerCase()))
+      .slice(0, 5); // Limita a 5 sugerencias
+
+    setSugerencias(sugerenciasFiltradas);
+    setMostrarSugerencias(sugerenciasFiltradas.length > 0);
+  }, [nombreBusqueda, todosLosJuegos]);
+
+  const handleBuscar = () => {
+    // Redireccionar a la página de catálogo con el término de búsqueda
+    window.location.href = `/Catalogo?busqueda=${encodeURIComponent(nombreBusqueda)}`;
+  };
+
+  const handleSeleccionarSugerencia = (nombre: string) => {
+    setNombreBusqueda(nombre);
+    setSugerencias([]);
+    setMostrarSugerencias(false);
+    window.location.href = `/Catalogo?busqueda=${encodeURIComponent(nombre)}`;
+  };
 
   return (
     <div id="inicio-page-container">
-      {/* Barra de navegación superior */}
+      {/* Barra superior */}
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div className="container">
           <Link className="navbar-brand" to="/Inicio">
@@ -164,43 +61,48 @@ function BarraNav() {
               src={Logo}
               alt="Game Verse Logo"
               className="rounded-circle border border-danger"
-            />{" "}
-            Game Verse
+              width={40}
+              height={40}
+            />
+            <span className="ms-2">Game Verse</span>
           </Link>
 
-          {/* Barra de búsqueda */}
-          <form
-            className="d-flex mx-auto position-relative"
-            id="barraBusquedaContainer"
-          >
+          <form className="d-flex mx-auto position-relative" style={{ width: "50%" }}>
+            {location.pathname === "/Catalogo" && (
+              <button
+                className="btn btn-outline-light me-2"
+                type="button"
+                onClick={onAbrirFiltroLateral}
+                title="Abrir filtros"
+              >
+                <i className="bi bi-sliders"></i>
+              </button>
+            )}
+
             <input
-              ref={referenciaBusqueda}
+              ref={inputRef}
               className="form-control me-2"
               type="search"
               placeholder="Buscar juegos..."
-              aria-label="Buscar"
               value={nombreBusqueda}
-              onChange={manejarCambioNombre}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setNombreBusqueda(e.target.value)
+              }
+              onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
             />
-            <button
-              className="btn btn-outline-light"
-              type="button"
-              onClick={manejarClickBuscar}
-            >
+
+            <button className="btn btn-outline-light" type="button" onClick={handleBuscar}>
               Buscar
             </button>
 
-            {/* Sugerencias */}
-            {mostrarResultadosBusqueda && sugerenciasBusqueda.length > 0 && (
-              <ul
-                className="list-group position-absolute w-100 bg-light border rounded shadow-sm"
-                style={{ zIndex: 1000 }}
-              >
-                {sugerenciasBusqueda.map((juego) => (
+            {mostrarSugerencias && (
+              <ul className="list-group position-absolute w-100 mt-5 zindex-tooltip">
+                {sugerencias.map((juego) => (
                   <li
                     key={juego.id}
                     className="list-group-item list-group-item-action"
-                    onClick={() => seleccionarSugerencia(juego.nombre)}
+                    onClick={() => handleSeleccionarSugerencia(juego.nombre)}
+                    role="button"
                   >
                     {juego.nombre}
                   </li>
@@ -210,11 +112,7 @@ function BarraNav() {
           </form>
 
           <Link className="btn btn-sm btn-outline-light" to="/Perfil">
-            <i
-              className="bi bi-person-fill"
-              style={{ fontStyle: "normal" }}
-            ></i>
-            <span className="mi-cuenta-texto"> Mi Cuenta </span>
+            <i className="bi bi-person-fill me-1"></i> Mi Cuenta
           </Link>
         </div>
       </nav>
@@ -222,67 +120,40 @@ function BarraNav() {
       {/* Barra de navegación secundaria */}
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container">
-          <ul
-            className="nav justify-content-center w-100"
-            style={{ gap: "10px" }}
-          >
+          <ul className="nav justify-content-center w-100 gap-3">
             <Dropdown>
-              <Dropdown.Toggle>Inicio</Dropdown.Toggle>
+              <Dropdown.Toggle variant="light" size="sm">Inicio</Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item as={Link} to="/Inicio">
-                  Destacados
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/Inicio">
-                  Ofertas
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/Inicio">
-                  Próximos lanzamientos
-                </Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Inicio">Destacados</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Inicio">Ofertas</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Inicio">Próximos lanzamientos</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/Catalogo">
-                Catálogo
-              </Link>
+              <Link className="nav-link" to="/Catalogo">Catálogo</Link>
             </li>
 
             <Dropdown>
-              <Dropdown.Toggle>Plataformas</Dropdown.Toggle>
+              <Dropdown.Toggle variant="light" size="sm">Plataformas</Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item as={Link} to="/Catalogo">
-                  PC
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/Catalogo">
-                  PlayStation 5
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/Catalogo">
-                  Xbox
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="/Catalogo">
-                  Nintendo Switch
-                </Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Catalogo">PC</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Catalogo">PlayStation 5</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Catalogo">Xbox</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/Catalogo">Nintendo Switch</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/MasVendidos">
-                Más vendidos
-              </Link>
+              <Link className="nav-link" to="/MasVendidos">Más vendidos</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/MejorValorados">Mejor valorados</Link>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link" to="/MejorValorados">
-                Mejor valorados
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link
-                className="nav-link d-flex align-items-center"
-                to="/Carrito"
-              >
-                <i className="bi bi-cart-fill me-1"></i>Carrito
+              <Link className="nav-link d-flex align-items-center" to="/Carrito">
+                <i className="bi bi-cart-fill me-1"></i> Carrito
               </Link>
             </li>
           </ul>
