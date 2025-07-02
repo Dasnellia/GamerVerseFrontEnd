@@ -4,6 +4,7 @@ import HighchartsReact from 'highcharts-react-official'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../../css/estadisticas.css'
 
+
 const DiagramadeVentas = () => {
   const [totales, setTotales] = useState<number[]>([])
   const [año, setAño] = useState<number>(new Date().getFullYear())
