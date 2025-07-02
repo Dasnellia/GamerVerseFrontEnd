@@ -16,22 +16,22 @@ import New3 from '../../../imagenes/News/New3_Valorant.jpg';
 interface DetalleNoticia {
   id: number;
   foto?: string;
-  name: string;
+  titulo: string;
   descripcion: string;
 }
 
 // Estructura para Agregar Notica 
 interface NewNewsInput {
-  name: string;
+  titulo: string;
   descripcion: string;
   foto?: File | null;
 }
 
 // Datos Simulados
 export const noticiasSimuladas: DetalleNoticia[] = [
-  { id: 1, name: 'Sonic Racing: Crossworlds', descripcion: 'Nuevas filtraciones están comenzando a circular sobre la beta cerrada de Sonic Racing: Crossworlds, exclusiva para usuarios de PlayStation 5...', foto: New1 },
-  { id: 2, name: 'Pokémon Escarlata y Púrpura', descripcion: 'Tras ofreceros detalles de la llegada de Mew y Mewtwo, os traemos un par de capturas...', foto: New2 },
-  { id: 3, name: 'Valorant: nuevas skins para sus armas', descripcion: 'Riot Games ha revelado una nueva colección de skins con temática futurista...', foto: New3 },
+  { id: 1, titulo: 'Sonic Racing: Crossworlds', descripcion: 'Nuevas filtraciones están comenzando a circular sobre la beta cerrada de Sonic Racing: Crossworlds, exclusiva para usuarios de PlayStation 5...', foto: New1 },
+  { id: 2, titulo: 'Pokémon Escarlata y Púrpura', descripcion: 'Tras ofreceros detalles de la llegada de Mew y Mewtwo, os traemos un par de capturas...', foto: New2 },
+  { id: 3, titulo: 'Valorant: nuevas skins para sus armas', descripcion: 'Riot Games ha revelado una nueva colección de skins con temática futurista...', foto: New3 },
 ];
 
 // Main
@@ -124,7 +124,7 @@ const MainContent = () => {
     const newId = datosNoticias.length > 0 ? Math.max(...datosNoticias.map(noticia => noticia.id)) + 1 : 1; 
     const newDetalleNoticia: DetalleNoticia = {
       id: newId,
-      name: nuevaNoticia.name,
+      titulo: nuevaNoticia.titulo,
       descripcion: nuevaNoticia.descripcion,
       foto: nuevaNoticia.foto ? nuevaNoticia.foto.name : undefined,
     };
@@ -161,10 +161,10 @@ const MainContent = () => {
                         <td>{noticia.id}</td>
                         <td>
                           <div className="user-foto">
-                            {noticia.foto && <img src={noticia.foto} alt={noticia.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                            {noticia.foto && <img src={noticia.foto} alt={noticia.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                           </div>
                         </td>
-                        <td>{noticia.name}</td>
+                        <td>{noticia.titulo}</td>
                         <td>{noticia.descripcion}</td>
                         <td className="news-actions text-center"> 
                           <i
@@ -199,7 +199,7 @@ const MainContent = () => {
                     show={isEliminarModalOpen}
                     onCerrar={handleCerrarEliminarModal}
                     noticiaId={noticiaAEliminar.id}
-                    nombreNoticia={noticiaAEliminar.name}
+                    nombreNoticia={noticiaAEliminar.titulo}
                     onEliminar={confirmarEliminarNoticia}
                   />
                 )}

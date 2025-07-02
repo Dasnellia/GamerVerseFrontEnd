@@ -4,7 +4,7 @@ import '../../../css/AgregarNoticia.css';
 
 // Estructura Noticia Nueva
 interface NewNewsInput {
-  name: string;
+  titulo: string;
   descripcion: string;
   foto?: File | null;
 }
@@ -17,14 +17,14 @@ interface AgregarNoticiaProps {
 }
 
 const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, show }) => {
-  const [name, setName] = useState<string>('');
+  const [titulo, setName] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
   const [foto, setFoto] = useState<File | null>(null);
 
   // Enviar Formulario que se lleno
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAgregar({ name, descripcion, foto });
+    onAgregar({ titulo, descripcion, foto });
     setName('');
     setDescripcion('');
     setFoto(null);
@@ -48,7 +48,7 @@ const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, sh
             <Form.Label>Nombre</Form.Label>
             <Form.Control
               type="text"
-              value={name}
+              value={titulo}
               onChange={(e) => setName(e.target.value)}
               required
               className="bg-secondary text-white"

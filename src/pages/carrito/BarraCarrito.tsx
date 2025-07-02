@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import '../../css/BarraCarrito.css';
 import { Link } from 'react-router-dom';
 import type { CarritoItem } from '../carrito/DetalleCarrito';
 import { imagenes } from '../carrito/DetalleCarrito';
+import '../../css/BarraCarrito.css';
 
 const BarraCarrito = () => {
     const [isVisible, setIsVisible] = useState(false);
@@ -35,7 +35,7 @@ const BarraCarrito = () => {
 
     const itemsMostrados = carritoItems.slice(0, 7); 
 
-    // Cuanto Juegos no estan siendo mostrados
+    // Cantidad de juegos que no estan siendo mostrados
     const cantidadItemsRestantes = carritoItems.length - itemsMostrados.length; 
 
     // Elimina un juego del carrito

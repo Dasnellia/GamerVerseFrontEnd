@@ -1,21 +1,7 @@
-:root {
-    --primary-red: #d10000;
-    --dark-background: #1e1e1e;
-    --light-text: #ffffff;
-}
-
-.texto-rojo {
-    color: red;
-}
-
-.barra-carrito-container {
-    position: relative;
-}
-
 /* Mostrar Carrito */
 .barra-carrito-toggle-btn {
-    background-color: var(--primary-red);
-    color: var(--light-text); 
+    background-color: #d10000; 
+    color: #ffffff;
     border: none;
     padding: 10px 15px;
     border-radius: 5px;
@@ -27,18 +13,14 @@
     z-index: 9999;
 }
 
-.barra-carrito-toggle-btn:hover {
-    background-color: darkred; 
-}
-
 /* Barra */
 .barra-carrito-slide {
     position: fixed;
     bottom: -500px;
     left: 0;
     width: 100%;
-    background-color: #333; 
-    color: var(--light-text); 
+    background-color: #333;
+    color: #ffffff;
     z-index: 1000;
     box-shadow: 0px -5px 10px rgba(0, 0, 0, 0.2);
     transition: bottom 0.3s ease-in-out;
@@ -88,7 +70,7 @@
     text-align: center;
 }
 
-/* Imagen y BotÃ³n Eliminar */
+/* Imagen y Botón Eliminar */
 .item-visual {
     position: relative;
     margin-bottom: 5px;
@@ -109,7 +91,7 @@
     top: -5px;
     right: -5px;
     background-color: rgba(0, 0, 0, 0.5); 
-    color: var(--light-text); 
+    color: #ffffff; 
     border: none;
     border-radius: 50%;
     width: 20px;
@@ -145,7 +127,7 @@
 .ir-a-carrito-btn {
     display: block;
     background-color: #9e2828; 
-    color: var(--light-text); 
+    color: #ffffff; 
     padding: 10px 20px;
     border-radius: 5px;
     text-decoration: none;
@@ -154,7 +136,7 @@
 }
 
 .ir-a-carrito-btn:hover {
-    background-color: #7e1e1e; 
+    background-color: #7e1e1e;
 }
 
 /*Mas juegos */
@@ -168,7 +150,7 @@
     align-items: center;
     font-size: 0.9em;
     font-weight: bold;
-    color: var(--light-text); 
+    color: #ffffff; 
 }
 
 .more-items-link {
