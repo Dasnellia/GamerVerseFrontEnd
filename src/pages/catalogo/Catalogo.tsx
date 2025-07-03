@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import '../../css/Catalogo.css';
+import '../../css/Catalogo.css'; 
 import 'rc-slider/assets/index.css';
 
 import Footer from './Footer';
 import DetalleJuego, { productosIniciales, type Comentario } from './DetalleJuego';
 import type { Juego as JuegoCompleto } from './DetalleJuego';
 import BarraCarrito from '../carrito/BarraCarrito';
-import { mostrarMensajeToast, handleAgregarAlCarrito as handleAgregarAlCarritoBase } from '../carrito/DetalleCarrito';
+import { handleAgregarAlCarrito as handleAgregarAlCarritoBase } from '../carrito/DetalleCarrito';
 
 import Filtro from '../catalogo/Filtro'
 
@@ -62,7 +62,6 @@ function Catalogo() {
 
         if (id && nombre && precio !== undefined && imagen) {
             handleAgregarAlCarritoBase(evento);
-            mostrarMensajeToast(`¡"${nombre}" ha sido añadido al carrito!`);
             setTimeout(() => {
                 window.location.reload();
             }, 1000);

@@ -1,88 +1,84 @@
+import React from 'react';
+
+// ==========================================================
+// INTERFACES (DEFINIDAS AQUÍ COMO FUENTE ÚNICA DE VERDAD)
+// Asegúrate de que esta interfaz coincida con la estructura que devuelve tu backend para los ítems del carrito.
+// El backend de carritoService devuelve: id, nombre, precio, cantidad, imagen, stockDisponible
+// ==========================================================
 export interface CarritoItem {
-  id: number;
+  id: number; // ID del juego
   nombre: string;
-  precio?: number;
+  precio: number;
   cantidad: number;
-  imagen?: string;
+  imagen: string | null; // Nombre del archivo de imagen (ej. "juego1.jpg")
+  stockDisponible?: number; // Stock actual del juego (opcional aquí si no siempre se necesita)
 }
 
-import EldenRing from '../../imagenes/Juegos/EldenRing.png';
-import ZeldaTears from '../../imagenes/Juegos/LoZTofk.jpg';
-import Cyberpunk from '../../imagenes/Juegos/cyberpunkcard.jpg';
-import GodOfWar from '../../imagenes/Juegos/god-of-war.jpg';
-import HogwartsLegacy from '../../imagenes/Juegos/hogwartlegacy.jpeg';
-import ResidentEvil4 from '../../imagenes/Juegos/ResidentEVIL4Remake.jpg';
-import Starfield from '../../imagenes/Juegos/Starfield.webp';
-import FinalFantasyXVI from '../../imagenes/Juegos/Final-fantasy-XVI.png';
-import DarkSoul from '../../imagenes/Juegos/DarkSouls.jpg';
-import Expedition33 from '../../imagenes/Juegos/Expedition33.avif';
-import StellarBlade from '../../imagenes/Juegos/StellarBlade.jpg';
-import ARK from '../../imagenes/Juegos/ARK.jpg';
-import GTA from '../../imagenes/Juegos/GTA5.jpg';
-import Minecraft from '../../imagenes/Juegos/Minecraft.png';
-import KingdomHearts from '../../imagenes/Juegos/KingdomHearts.jpg';
-import ResidentEvilVillage from '../../imagenes/Juegos/ResidentEvil8.jpg';
+// ==========================================================
+// FUNCIONES DE UTILIDAD PARA EL CARRITO
+// ==========================================================
 
-// Conexion para Imagenes
-export const imagenes = {
-  "The Legend of Zelda: Tears of the Kingdom": ZeldaTears,
-  "Cyberpunk 2077": Cyberpunk,
-  "Elden Ring": EldenRing,
-  "God of War Ragnarök": GodOfWar,
-  "Hogwarts Legacy": HogwartsLegacy,
-  "Resident Evil 4 Remake": ResidentEvil4,
-  "Starfield": Starfield,
-  "Final Fantasy XVI": FinalFantasyXVI,
-  "Dark Soul": DarkSoul,
-  "Expedition 33": Expedition33,
-  "Stellar Blade": StellarBlade,
-  "ARK": ARK,
-  "GTA": GTA,
-  "Minecraft": Minecraft,
-  "Kingdom Hearts": KingdomHearts,
-  "Resident Evil Village": ResidentEvilVillage
-};
-
-// Mostrar mensajito
+// Función para mostrar mensajes "toast" (pop-up)
 export const mostrarMensajeToast = (mensaje: string) => {
     const toastElement = document.getElementById('toast');
     if (toastElement) {
         toastElement.textContent = mensaje;
         toastElement.classList.add('show');
         setTimeout(() => {
-        toastElement.classList.remove('show');
+            toastElement.classList.remove('show');
         }, 3000);
     }
 };
 
-// Agregar Carrito
-export const handleAgregarAlCarrito = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const boton = event.currentTarget; 
-    const id = parseInt(boton.dataset.id || '', 10); 
-    const nombre = boton.dataset.nombre; 
-    const precioString = boton.dataset.precio;
-    const precio = precioString ? parseFloat(precioString) : undefined;
+// Función para agregar un juego al carrito (ahora interactúa con el backend)
+// Se mantiene la firma para ser compatible con los botones existentes en Catalogo.tsx e Inicio.tsx
+export const handleAgregarAlCarrito = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    const boton = event.currentTarget;
+    const id = parseInt(boton.dataset.id || '', 10);
+    const nombre = boton.dataset.nombre;
+    // El precio y la imagen no son estrictamente necesarios para el backend de `addUpCarritoItem`,
+    // pero se mantienen para la consistencia si se usaran en el frontend para el toast.
+    const precioString = boton.dataset.precio; 
     const imagen = boton.dataset.imagen; 
 
-    if (id && nombre && precio !== undefined && imagen) {
-        const productoAAgregar = { id, nombre, precio, imagen }; 
+    if (!id || !nombre) {
+        console.error("Faltan datos (ID o nombre) para agregar el juego al carrito.");
+        mostrarMensajeToast("Error: Datos incompletos del juego.");
+        return;
+    }
 
-        const carritoGuardado = localStorage.getItem('carrito'); 
-        const carrito = carritoGuardado ? JSON.parse(carritoGuardado) as CarritoItem[] : []; 
+    const token = localStorage.getItem('userToken'); // O 'adminToken' si es el token general de usuario
+    if (!token) {
+        mostrarMensajeToast("Debes iniciar sesión para agregar ítems al carrito.");
+        return;
+    }
 
-        const productoExistenteIndex = carrito.findIndex(item => item.id === id);
+    const API_BASE_URL = 'http://localhost:3001/api/carrito';
 
-        // Si el producto existe lo copia a carrito
-        if (productoExistenteIndex > -1) { 
-            const nuevoCarrito = [...carrito];
-            nuevoCarrito[productoExistenteIndex].cantidad = (nuevoCarrito[productoExistenteIndex].cantidad || 0) + 1;
-            localStorage.setItem('carrito', JSON.stringify(nuevoCarrito)); // Guarda carrito actualizado
+    try {
+        const response = await fetch(`${API_BASE_URL}/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ juegoId: id, cantidad: 1 }), // Siempre añade 1 unidad al hacer clic en este botón
+        });
 
-        // Si el producto no existe
-        } else { 
-            const nuevoItem = { ...productoAAgregar, cantidad: 1 }; 
-            localStorage.setItem('carrito', JSON.stringify([...carrito, nuevoItem])); 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.msg || 'Error al añadir el ítem al carrito.');
         }
-        mostrarMensajeToast(`¡Se añadió ${nombre} al carrito!`); 
+
+        // Si la operación fue exitosa, muestra un mensaje al usuario
+        mostrarMensajeToast(`¡Se añadió "${nombre}" al carrito!`);
+
+        // Opcional: Disparar un evento personalizado para notificar a otros componentes (ej. BarraCarrito)
+        // que el carrito ha sido actualizado y deberían refrescar sus datos.
+        window.dispatchEvent(new Event('carritoActualizado'));
+
+    } catch (error: any) {
+        console.error("Error al agregar al carrito:", error);
+        mostrarMensajeToast(`Error: ${error.message || "No se pudo añadir al carrito."}`);
     }
 };
