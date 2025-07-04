@@ -36,6 +36,22 @@ function MejorValorados() {
         setJuegoSeleccionado(null);
     };
 
+    const handleAgregarJuegoAlCarrito = (evento: React.MouseEvent<HTMLButtonElement>) => {
+        const boton = evento.currentTarget;
+        const id = parseInt(boton.dataset.id || '', 10);
+        const nombre = boton.dataset.nombre;
+        const precioString = boton.dataset.precio;
+        const precio = precioString ? parseFloat(precioString) : undefined;
+        const imagen = boton.dataset.imagen;
+
+        if (id && nombre && precio !== undefined && imagen) {
+            handleAgregarAlCarrito(evento);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+    };
+
     const agregarComentario = (juegoId: number, comentario: Omit<Comentario, 'id' | 'date'>) => {
         if (!juegoSeleccionado) return;
 
@@ -232,7 +248,7 @@ function MejorValorados() {
                                         data-nombre={juego.nombre}
                                         data-precio={juego.precio.toFixed(2)}
                                         data-imagen={juego.imagen}
-                                        onClick={handleAgregarAlCarrito}
+                                        onClick={handleAgregarJuegoAlCarrito}
                                     >
                                         Agregar al carrito
                                     </button>

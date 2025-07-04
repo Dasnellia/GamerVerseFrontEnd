@@ -1,3 +1,4 @@
+// src/components/Inicio.tsx
 import BarraCarrito from '../carrito/BarraCarrito'; 
 import { handleAgregarAlCarrito } from '../carrito/DetalleCarrito';
 import { useState, useEffect, useRef } from 'react';
@@ -5,19 +6,23 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/Inicio.css';
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
 import Footer from './Footer';
 import type { Juego as JuegoCompleto, Comentario } from './DetalleJuego';
 import DetalleJuego from './DetalleJuego';
-import { productosIniciales } from './DetalleJuego';
+import { productosIniciales } from './DetalleJuego'; 
 
-import Banner1 from '../../imagenes/Verano.png';
-import Banner2 from '../../imagenes/Promo.png';
-import Banner3 from '../../imagenes/Juego-Nuevo.png';
 import BarraNav from './BarraNavUser';
 
-const URL = "http://localhost:5000" 
+const API_NOTICIAS_URL = 'http://localhost:3001/api/noticia'; 
 
+interface Noticia {
+  id: number; 
+  titulo: string; 
+  descripcion: string; 
+  foto?: string | null; 
+}
 
 interface JuegoBasico {
   id: number;
@@ -28,9 +33,10 @@ interface JuegoBasico {
   rating: number;
   imagen: string;
   descripcion?: string;
+  lanzamiento?: string; 
 }
 
-const juegosIniciales: JuegoBasico[] = productosIniciales.map(juego => ({
+const juegosBasicosIniciales: JuegoBasico[] = productosIniciales.map(juego => ({
   id: juego.id,
   nombre: juego.nombre,
   precio: juego.precio,
@@ -38,25 +44,79 @@ const juegosIniciales: JuegoBasico[] = productosIniciales.map(juego => ({
   descuento: juego.descuento,
   rating: juego.rating,
   imagen: juego.imagen,
-  descripcion: juego.descripcion 
+  descripcion: juego.descripcion,
+  lanzamiento: juego.lanzamiento 
 }));
 
 const Inicio = () => {
-  
-  const [ lista, setLista ] = useState<JuegoCompleto[]>([])
-
-  const httpsobtenerJuegos = (): JuegoBasico[] => {
-    const juegosGuardados = localStorage.getItem('juegos');
-    return juegosGuardados ? JSON.parse(juegosGuardados) : juegosIniciales;
-  }
+  const [juegosData, setJuegosData] = useState<JuegoCompleto[]>(productosIniciales);
+  const [noticiasCarrusel, setNoticiasCarrusel] = useState<Noticia[]>([]); 
+  const [loadingNoticias, setLoadingNoticias] = useState<boolean>(true);
+  const [errorNoticias, setErrorNoticias] = useState<string | null>(null); 
 
   const [nombreBusqueda, setNombreBusqueda] = useState('');
-  const [juegosFiltrados, setJuegosFiltrados] = useState<JuegoBasico[]>(juegosIniciales);
+  const [juegosFiltrados, setJuegosFiltrados] = useState<JuegoBasico[]>(juegosBasicosIniciales);
   const [juegoSeleccionado, setJuegoSeleccionado] = useState<JuegoCompleto | null>(null);
   const [mostrarModal, setMostrarModal] = useState(false);
 
+  const navigate = useNavigate(); // Inicializa useNavigate
+
+  // Función para cargar las noticias desde el backend
+  const fetchNoticias = async () => {
+    // A. Obtener el token del localStorage
+    const token = localStorage.getItem('userToken');
+
+    // B. Preparar las cabeceras, incluyendo el token si existe
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn("Advertencia: No se encontró token de usuario. La solicitud a /api/noticia podría fallar si la ruta está protegida.");
+      // Opcional: Si las noticias SIEMPRE requieren autenticación, podrías redirigir aquí.
+      // Pero es común que las noticias sean públicas o semipúblicas.
+      // Si la ruta no está protegida, no pasa nada si no hay token.
+    }
+
+    try {
+      setLoadingNoticias(true); 
+      const response = await fetch(API_NOTICIAS_URL, { headers }); // C. Pasar las cabeceras a la petición
+
+      if (!response.ok) {
+        // D. Manejo de errores de autenticación/autorización
+        if (response.status === 401 || response.status === 403) {
+          setErrorNoticias('No autorizado para ver las noticias. Tu sesión puede haber expirado.');
+          localStorage.clear(); // Limpia todos los datos de sesión para forzar un nuevo login
+          setTimeout(() => {
+            navigate('/IniciarSesion'); // Redirige a la página de login
+          }, 2000);
+        } else {
+          throw new Error('Error al cargar las noticias. Código: ' + response.status);
+        }
+      }
+      const data: any[] = await response.json();
+      const mappedNoticias: Noticia[] = data.map(noticia => ({
+        id: noticia.NoticiaID,
+        titulo: noticia.Titulo,
+        descripcion: noticia.Descripcion,
+        foto: noticia.Foto || null, 
+      }));
+      setNoticiasCarrusel(mappedNoticias);
+    } catch (error: any) {
+      console.error("Error al cargar noticias para el carrusel:", error);
+      setErrorNoticias(error.message); 
+    } finally {
+      setLoadingNoticias(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNoticias();
+  }, [navigate]); // Añade 'navigate' a las dependencias para que useEffect no de warning
+
   const abrirModal = (juegoId: number) => {
-    const juegoCompleto = productosIniciales.find(p => p.id === juegoId);
+    const juegoCompleto = juegosData.find(p => p.id === juegoId);
     if (juegoCompleto) {
       setJuegoSeleccionado(juegoCompleto);
       setMostrarModal(true);
@@ -68,43 +128,66 @@ const Inicio = () => {
     setJuegoSeleccionado(null);
   };
 
+  const handleAgregarJuegoAlCarrito = (evento: React.MouseEvent<HTMLButtonElement>) => {
+    const boton = evento.currentTarget;
+    const id = parseInt(boton.dataset.id || '', 10);
+    const nombre = boton.dataset.nombre;
+    const precioString = boton.dataset.precio;
+    const precio = precioString ? parseFloat(precioString) : undefined;
+    const imagen = boton.dataset.imagen;
+
+    if (id && nombre && precio !== undefined && imagen) {
+        handleAgregarAlCarrito(evento);
+    }
+  };
+
   const agregarComentario = (juegoId: number, comentario: Omit<Comentario, 'id' | 'date'>) => {
-    if (!juegoSeleccionado) return;
-
-    const juegoActualizado: JuegoCompleto = {
-      ...juegoSeleccionado,
-      comentarios: [
-        ...juegoSeleccionado.comentarios,
-        {
-          id: juegoSeleccionado.comentarios.length + 1,
-          ...comentario,
-          date: new Date().toISOString().split('T')[0]
+    setJuegosData(prevJuegosData =>
+      prevJuegosData.map(juego => {
+        if (juego.id === juegoId) {
+          const nuevoComentario = {
+            ...comentario,
+            id: juego.comentarios.length + 1,
+            date: new Date().toISOString().split('T')[0]
+          };
+          return {
+            ...juego,
+            comentarios: [...juego.comentarios, nuevoComentario]
+          };
         }
-      ]
-    };
+        return juego;
+      })
+    );
 
-    setJuegoSeleccionado(juegoActualizado);
-
-    const index = productosIniciales.findIndex(p => p.id === juegoId);
-    if (index !== -1) {
-      productosIniciales[index] = juegoActualizado;
+    if (juegoSeleccionado && juegoSeleccionado.id === juegoId) {
+      const nuevoComentario = {
+        ...comentario,
+        id: juegoSeleccionado.comentarios.length + 1,
+        date: new Date().toISOString().split('T')[0]
+      };
+      setJuegoSeleccionado({
+        ...juegoSeleccionado,
+        comentarios: [...juegoSeleccionado.comentarios, nuevoComentario]
+      });
     }
   };
 
   const parseFecha = (fecha: string): Date => {
-  const [dia, mes, anio] = fecha.split('-').map(Number);
-  return new Date(anio, mes - 1, dia); 
+    const [dia, mes, anio] = fecha.split('-').map(Number);
+    return new Date(anio, mes - 1, dia); 
   };
 
   const filtrarJuegos = () => {
     const nombreFiltrado = nombreBusqueda.toLowerCase();
 
-    const nuevosJuegosFiltrados = productosIniciales
+    const nuevosJuegosFiltrados = juegosData
       .filter(juego => {
         return juego.nombre.toLowerCase().includes(nombreFiltrado);
       })
       .sort((a, b) => {
-        return parseFecha(b.lanzamiento).getTime() - parseFecha(a.lanzamiento).getTime();
+        const fechaA = a.lanzamiento ? parseFecha(a.lanzamiento).getTime() : 0;
+        const fechaB = b.lanzamiento ? parseFecha(b.lanzamiento).getTime() : 0;
+        return fechaB - fechaA;
       })
       .slice(0, 10)
       .map(juego => ({
@@ -115,15 +198,16 @@ const Inicio = () => {
         descuento: juego.descuento,
         rating: juego.rating,
         imagen: juego.imagen,
-        descripcion: juego.descripcion
+        descripcion: juego.descripcion,
+        lanzamiento: juego.lanzamiento
       }));
 
     setJuegosFiltrados(nuevosJuegosFiltrados);
   };
-
+  
   useEffect(() => {
     filtrarJuegos();
-  }, [nombreBusqueda]);
+  }, [nombreBusqueda, juegosData]);
 
   return (
     <div id="inicio-page-container">
@@ -136,27 +220,40 @@ const Inicio = () => {
             <div className="container">
               <div id="carouselExample" className="carousel slide" data-bs-ride="carousel">
                 <div className="carousel-inner rounded">
-                  <div className="carousel-item active">
-                    <img src={Banner1} className="d-block w-100" alt="Ofertas de Verano" />
-                    <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
-                      <h5>Ofertas de Verano</h5>
-                      <p>Hasta 70% de descuento en juegos seleccionados</p>
+                  {loadingNoticias ? (
+                    <div className="carousel-item active">
+                      <img src="https://placehold.co/1200x400/333333/ffffff?text=Cargando+Noticias..." className="d-block w-100" alt="Cargando..." />
+                      <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
+                        <h5>Cargando Noticias...</h5>
+                        <p>Por favor, espera.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="carousel-item">
-                    <img src={Banner3} className="d-block w-100" alt="Nuevos Lanzamientos" />
-                    <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
-                      <h5>Nuevos Lanzamientos</h5>
-                      <p>Descubre los juegos más recientes</p>
+                  ) : noticiasCarrusel.length > 0 ? (
+                    noticiasCarrusel.map((noticia, index) => (
+                      <div className={`carousel-item ${index === 0 ? 'active' : ''}`} key={noticia.id}>
+                        <img 
+                          src={noticia.foto || 'https://placehold.co/1200x400/777777/ffffff?text=Noticia+Sin+Foto'} 
+                          className="d-block w-100" 
+                          alt={noticia.titulo} 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/1200x400/777777/ffffff?text=Error+Cargando+Foto';
+                          }}
+                        />
+                        <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
+                          <h5>{noticia.titulo}</h5>
+                          <p>{noticia.descripcion}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="carousel-item active">
+                      <img src="https://placehold.co/1200x400/555555/ffffff?text=No+hay+noticias+disponibles" className="d-block w-100" alt="No hay noticias" />
+                      <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
+                        <h5>No hay noticias disponibles</h5>
+                        <p>Revisa más tarde.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="carousel-item">
-                    <img src={Banner2} className="d-block w-100" alt="Ediciones Coleccionistas" />
-                    <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
-                      <h5>Ediciones Coleccionistas</h5>
-                      <p>Artículos exclusivos para los verdaderos fans</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
                 <button className="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
                   <span className="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -182,7 +279,7 @@ const Inicio = () => {
                         className="card-img-top game-cover"
                         alt={juego.nombre}
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'ruta/a/imagen/placeholder.jpg';
+                          (e.target as HTMLImageElement).src = 'https://placehold.co/400x200/cccccc/000000?text=No+Image'; 
                         }}
                       />
                       <div id="toast" className="toast"></div>
@@ -218,7 +315,7 @@ const Inicio = () => {
                             data-nombre={juego.nombre}
                             data-precio={juego.precio.toFixed(2)}
                             data-imagen={juego.imagen}
-                            onClick={handleAgregarAlCarrito}
+                            onClick={handleAgregarJuegoAlCarrito}
                         >
                             Agregar al carrito
                         </button>
@@ -255,7 +352,7 @@ const Inicio = () => {
       )}
       <BarraCarrito />
       <Footer />
-    </div>  
+    </div> 
   );
 }
 export default Inicio;

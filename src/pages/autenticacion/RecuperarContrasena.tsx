@@ -1,25 +1,39 @@
+// src/components/RecuperarContrasena.tsx
 import React, { useState } from 'react';
 import LogoRecuperar from '../../imagenes/LogoRecuperarContraseña.png';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Alert } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../css/RecuperarContrasena.css';
+import axios from 'axios'; // Importa Axios para hacer peticiones HTTP
 
 function RecuperarContrasena() {
-  // --- GGestion de Estado ---
+  // --- Gestión de Estado ---
   const [usuarioOEmail, setUsuarioOEmail] = useState('');
-  const [usuarioActual, setUsuarioActual] = useState('');
   const [nuevaContrasena, setNuevaContrasena] = useState('');
   const [confirmarNuevaContrasena, setConfirmarNuevaContrasena] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
+  // El paso inicial dependerá si ya tenemos un token en la URL para restablecer directamente
   const [paso, setPaso] = useState<'solicitar' | 'restablecer'>('solicitar');
+  const [tokenFromUrl, setTokenFromUrl] = useState<string | null>(null); // Para capturar el token de la URL
 
   // --- Navegacion ---
   const navegar = useNavigate();
 
-  // --- Manejadores de Eventos ---
-  const handleSolicitarRestablecimiento = (event: React.FormEvent) => {
+  // --- Efecto para capturar el token de la URL (si existe) ---
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      setTokenFromUrl(token);
+      setPaso('restablecer'); // Si hay token, vamos directo al paso de restablecer
+      setMensaje('Ingrese su nueva contraseña. El enlace ha sido reconocido.');
+    }
+  }, []); // Dependencia vacía para que se ejecute solo una vez al montar
+
+  // --- Manejador para Solicitar Restablecimiento ---
+  const handleSolicitarRestablecimiento = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setMensaje('');
@@ -29,20 +43,23 @@ function RecuperarContrasena() {
       return;
     }
 
-    const usuarioGuardado = localStorage.getItem(usuarioOEmail);
-    if (!usuarioGuardado) {
-      setError('No se encontró ningún usuario con ese nombre de usuario o correo electrónico.');
-      return;
+    try {
+      // Hacemos una petición POST a tu backend para solicitar el restablecimiento
+      const response = await axios.post('http://localhost:3001/api/usuarios/olvide-contrasena', {
+        identifier: usuarioOEmail, // Envía el identificador (correo o nickname)
+      });
+      // El mensaje se establece desde la respuesta del backend (que debería ser el mensaje genérico)
+      setMensaje(response.data.msg || 'Si el usuario existe, se ha enviado un enlace a su correo.');
+      // IMPORTANTE: Aquí NO cambiamos el paso. El usuario debe revisar su correo y hacer clic en el enlace.
+    } catch (err: any) {
+      console.error('Error al solicitar restablecimiento:', err);
+      // El backend ya envía un mensaje genérico por seguridad, así que replicamos eso o un mensaje de error genérico.
+      setError(err.response?.data?.msg || 'Ocurrió un error al solicitar el restablecimiento. Intente nuevamente.');
     }
-
-    const usuario = JSON.parse(usuarioGuardado);
-    setUsuarioActual(usuarioOEmail);
-    setMensaje(`Se ha enviado un enlace de verificación a su correo electrónico: ${usuario.email}. Por favor, revise su bandeja de entrada para continuar con el restablecimiento.`);
-    setPaso('restablecer');
   };
 
-  // --- Manejo de Restablecimiento ---
-  const handleRestablecerContrasena = (event: React.FormEvent) => {
+  // --- Manejador para Restablecer Contraseña ---
+  const handleRestablecerContrasena = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setMensaje('');
@@ -52,51 +69,56 @@ function RecuperarContrasena() {
       return;
     }
 
-    if (nuevaContrasena.length < 8) {
-      setError('La nueva contraseña debe tener al menos 8 caracteres.');
-      return;
-    }
-
     if (nuevaContrasena !== confirmarNuevaContrasena) {
       setError('Las nuevas contraseñas no coinciden.');
       return;
     }
 
-    const usuarioGuardado = localStorage.getItem(usuarioActual);
-    if (usuarioGuardado) {
-      const usuario = JSON.parse(usuarioGuardado);
-      const usuarioActualizado = { ...usuario, password: nuevaContrasena };
-      localStorage.setItem(usuarioActual, JSON.stringify(usuarioActualizado));
-      setMensaje('Su contraseña ha sido restablecida exitosamente. Será redirigido al inicio de sesión en unos segundos...');
+    // La validación de longitud y complejidad se hace en el backend (middleware)
+    // Sin embargo, una validación básica en el frontend es buena práctica para UX.
+    if (nuevaContrasena.length < 8) {
+      setError('La nueva contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    if (!tokenFromUrl) {
+        setError('No se encontró el token de restablecimiento. Por favor, solicite un nuevo enlace.');
+        return;
+    }
+
+    try {
+      // Hacemos una petición POST a tu backend para restablecer la contraseña
+      const response = await axios.post('http://localhost:3001/api/usuarios/restablecer-contrasena', {
+        token: tokenFromUrl, // Envía el token de la URL
+        newPassword: nuevaContrasena,
+      });
+
+      setMensaje(response.data.msg || 'Contraseña restablecida exitosamente.');
+      // Redirigir al inicio de sesión después de un breve retraso
       setTimeout(() => {
         navegar('/IniciarSesion');
       }, 3000);
-    } else {
-      setError('Ocurrió un error al restablecer la contraseña. Intente nuevamente.');
+
+    } catch (err: any) {
+      console.error('Error al restablecer contraseña:', err);
+      // El backend enviará mensajes de error específicos (ej. token inválido/expirado, validación de contraseña)
+      setError(err.response?.data?.msg || 'Ocurrió un error al restablecer la contraseña. Intente nuevamente.');
     }
   };
 
   // --- Renderizado del Componente ---
   return (
     <div className="recuperar-contenedor">
-      {/* Fondo animado */}
       <div className="fondo-animado"></div>
-
-      {/* Contenido principal del formulario */}
       <div className="contenedor-principal">
-        {/* Logo de la aplicación */}
         <div className="logo-container">
           <img src={LogoRecuperar} alt="Logo de Recuperación de Contraseña" className="logo" />
         </div>
-
-        {/* Título de la sección */}
         <h2 className="titulo-principal">Restablecer su contraseña</h2>
 
-        {/* Mensajes de error o éxito */}
         {error && <Alert variant="danger">{error}</Alert>}
         {mensaje && <Alert variant="info">{mensaje}</Alert>}
 
-        {/* Paso 1: Solicitar nombre de usuario/correo electrónico */}
         {paso === 'solicitar' && (
           <>
             <p className="descripcion">
@@ -119,11 +141,10 @@ function RecuperarContrasena() {
           </>
         )}
 
-        {/* Paso 2: Ingresar nueva contraseña */}
         {paso === 'restablecer' && (
           <>
             <p className="descripcion">
-              Ingrese su nueva contraseña y confírmela.
+              {tokenFromUrl ? 'Ingrese su nueva contraseña y confírmela.' : 'El enlace de restablecimiento ha sido enviado a su correo. Revise su bandeja de entrada.'}
             </p>
             <Form onSubmit={handleRestablecerContrasena} id="formulario-restablecer">
               <Form.Group className="mb-3" controlId="nuevaContrasena">
@@ -134,7 +155,7 @@ function RecuperarContrasena() {
                   value={nuevaContrasena}
                   onChange={(e) => setNuevaContrasena(e.target.value)}
                   required
-                  minLength={8}
+                  minLength={8} // HTML5 validation, backend has stricter validation
                 />
               </Form.Group>
               <Form.Group className="mb-3" controlId="confirmarNuevaContrasena">
@@ -145,10 +166,10 @@ function RecuperarContrasena() {
                   value={confirmarNuevaContrasena}
                   onChange={(e) => setConfirmarNuevaContrasena(e.target.value)}
                   required
-                  minLength={8}
+                  minLength={8} // HTML5 validation, backend has stricter validation
                 />
               </Form.Group>
-              <Button className="boton-enviar" type="submit">
+              <Button className="boton-enviar" type="submit" disabled={!tokenFromUrl}>
                 Restablecer contraseña
               </Button>
             </Form>
