@@ -147,42 +147,11 @@
     font-size: 0.09rem;
 }
 
-/* --- ESTILOS PARA EL CARRUSEL DE NOTICIAS --- */
-#inicio-page-container #carouselExample {
-    height: 400px; /* Altura fija para el carrusel */
-    overflow: hidden; /* Asegura que el contenido que exceda se oculte */
-    background-color: var(--light-dark); /* Fondo para cuando no hay imagen o está cargando */
-    border-radius: 0.5rem; /* Mantener bordes redondeados */
-    position: relative; /* Para posicionar el caption */
-}
-
-#inicio-page-container .carousel-inner {
-    height: 100%; /* El inner ocupa toda la altura del carrusel */
-}
-
-#inicio-page-container .carousel-item {
-    height: 100%; /* Cada item del carrusel ocupa toda la altura */
-}
-
-#inicio-page-container .carousel-item img {
-    width: 100%;
-    height: 100%; /* La imagen ocupa toda la altura del item */
-    object-fit: cover; /* Recorta la imagen para que cubra el espacio sin distorsión */
-    object-position: center; /* Centra la imagen si se recorta */
-}
-
 #inicio-page-container .carousel-caption {
     background-color: rgba(0, 0, 0, 0.75) !important;
     border-radius: 0.5rem;
     padding: 1rem;
     color: var(--text-light);
-    /* Asegura que el caption no afecte el tamaño del carrusel */
-    position: absolute;
-    bottom: 1.25rem; /* Ajusta según sea necesario */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%; /* Ajusta el ancho del caption */
-    max-width: 800px; /* Limita el ancho máximo del caption */
 }
 
 #inicio-page-container .carousel-caption h5 {
