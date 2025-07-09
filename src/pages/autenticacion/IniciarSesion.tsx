@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Alert } from 'react-bootstrap';
 import LogoPrincipal from '../../imagenes/LogoPrincipal.png';
-import { iniciarSesion } from '../../api/usuarios';
+import { iniciarSesion } from '../../api/usuarios'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../css/IniciarSesion.css';
 
@@ -14,24 +14,41 @@ function IniciarSesion() {
   const navegar = useNavigate();
 
   const manejarInicioSesion = async () => {
-    setMensajeError('');
+    setMensajeError(''); // Limpiar mensajes de error previos
 
     try {
       const respuesta = await iniciarSesion({ correo: usuarioOEmail, contrasena });
+
       if (respuesta.error) {
         setMensajeError(respuesta.error);
       } else {
+        // ¡¡¡CORRECCIÓN AQUÍ!!!
+        // Ahora guardamos el token como 'userToken' para usuarios normales.
+        // Si necesitas un 'adminToken' para administradores, deberías tener una lógica condicional aquí
+        // para guardar diferentes tokens o usar una clave diferente.
+        // Por ahora, asumimos que todos los tokens se guardan como 'userToken' para el carrito.
+        localStorage.setItem('userToken', respuesta.token); // <--- CAMBIO CLAVE AQUÍ
+        console.log('Inicio de sesión exitoso. Token guardado como userToken:', respuesta.token);
+
         const tipo = respuesta.usuario.tipo;
-        if (tipo === 'admin') navegar('/ListadoUsuarios');
-        else navegar(`/Inicio?username=${respuesta.usuario.nickname}`);
+        if (tipo === 'admin') {
+          // Opcional: Si los administradores necesitan un token diferente, podrías guardarlo aquí:
+          // localStorage.setItem('adminToken', respuesta.token);
+          navegar('/ListadoUsuarios'); // Navega a la página de administrador
+        } else {
+          navegar(`/Inicio?username=${respuesta.usuario.nickname}`); // Navega a la página de inicio para usuarios normales
+        }
       }
     } catch (e) {
-      setMensajeError('Error de conexión con el servidor.');
+      console.error("Error al intentar iniciar sesión:", e); // Log más detallado del error de conexión
+      setMensajeError('Error de conexión con el servidor. Inténtalo de nuevo más tarde.');
     }
   };
 
   const manejarPulsacionTecla = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') manejarInicioSesion();
+    if (e.key === 'Enter') {
+      manejarInicioSesion();
+    }
   };
 
   return (

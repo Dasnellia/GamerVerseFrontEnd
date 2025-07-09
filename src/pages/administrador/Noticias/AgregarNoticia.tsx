@@ -2,38 +2,38 @@ import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import '../../../css/AgregarNoticia.css'; 
 
-// Estructura Noticia Nueva
-interface NewNewsInput {
-  titulo: string;
-  descripcion: string;
-  foto?: File | null;
-}
+// Importa la interfaz como un tipo explícito desde ListadoNoticias.tsx
+// Esto asegura que se usa la misma definición de 'NewNewsInput' en toda la aplicación.
+import type { NewNewsInput } from './ListadoNoticias'; 
 
-// Estructura de AgregarNoticia
+// Estructura de AgregarNoticiaProps (DEFINICIÓN CONSISTENTE)
 interface AgregarNoticiaProps {
   onCerrar: () => void;
-  onAgregar: (nuevaNoticia: NewNewsInput) => void;
+  onAgregar: (nuevaNoticia: NewNewsInput) => Promise<void>;
+  // *** AÑADIDO: Prop para mostrar mensajes al usuario ***
+  onShowMessage: (type: 'success' | 'danger', text: string) => void; 
   show: boolean;
 }
 
-const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, show }) => {
-  const [titulo, setName] = useState<string>('');
+// *** AÑADIDO: 'onShowMessage' a las props desestructuradas ***
+const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, onShowMessage, show }) => {
+  const [titulo, setTitulo] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
-  const [foto, setFoto] = useState<File | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null); // Estado para la URL de la foto
 
   // Enviar Formulario que se lleno
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAgregar({ titulo, descripcion, foto });
-    setName('');
-    setDescripcion('');
-    setFoto(null);
-  };
-
-  // Cambio de archivo - File
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFoto(e.target.files[0]);
+    try {
+      await onAgregar({ titulo, descripcion, foto: fotoUrl }); // Pasa la URL de la foto
+      setTitulo(''); // Limpia el estado
+      setDescripcion('');
+      setFotoUrl(null);
+      // El modal se cerrará automáticamente en el padre después de refreshNoticias
+    } catch (error: any) { // Añadido : any para tipar el error
+      console.error("Error al agregar noticia desde el modal:", error);
+      // *** MODIFICADO: Reemplazado alert() por onShowMessage() ***
+      onShowMessage('danger', `Error al agregar noticia: ${error.message}`); 
     }
   };
 
@@ -45,11 +45,11 @@ const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, sh
       <Form onSubmit={handleSubmit}>
         <Modal.Body className="bg-dark text-white">
           <Form.Group className="mb-3">
-            <Form.Label>Nombre</Form.Label>
+            <Form.Label>Título</Form.Label>
             <Form.Control
               type="text"
               value={titulo}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setTitulo(e.target.value)}
               required
               className="bg-secondary text-white"
             />
@@ -66,11 +66,13 @@ const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, sh
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Foto</Form.Label>
+            <Form.Label>URL de la Foto</Form.Label>
             <Form.Control
-              type="file"
-              onChange={handleFileChange}
+              type="text"
+              value={fotoUrl || ''}
+              onChange={(e) => setFotoUrl(e.target.value || null)}
               className="bg-secondary text-white"
+              placeholder="Ej: https://ejemplo.com/imagen.jpg"
             />
           </Form.Group>
         </Modal.Body>
