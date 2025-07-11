@@ -8,22 +8,22 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../../css/ListaNoticias.css';
 
-// Estructura para la Tabla (DEFINICIÓN CONSISTENTE)
-interface DetalleNoticia {
-  id: number; // Corresponde a NoticiaID
-  foto?: string | null; // Corresponde a Foto (URL completa o null)
-  titulo: string; // Corresponde a Titulo
-  descripcion: string; // Corresponde a Descripcion
+// Estructura para la Tabla
+export interface DetalleNoticia {
+  id: number;
+  foto?: string | null; 
+  titulo: string; 
+  descripcion: string; 
 }
 
-// Estructura para Agregar Noticia (DEFINICIÓN CONSISTENTE)
-interface NewNewsInput {
+// Estructura para Agregar Noticia 
+export interface NewNewsInput {
   titulo: string;
   descripcion: string;
-  foto?: string | null; // La foto es una URL (string) o null
+  foto?: string | null; 
 }
 
-// Main Content Component
+// Main
 const MainContent: React.FC = () => {
   const [datosNoticias, setDatosNoticias] = useState<DetalleNoticia[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,18 +36,27 @@ const MainContent: React.FC = () => {
   const [noticiaAEliminar, setNoticiaAEliminar] = useState<DetalleNoticia | null>(null);
   const [isAgregarModalOpen, setIsAgregarModalOpen] = useState<boolean>(false);
 
-  const API_BASE_URL = 'http://localhost:3001/api/noticia'; // URL base para los endpoints de noticias
+  const [inlineMessage, setInlineMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
+
+  const API_BASE_URL = 'http://localhost:3001/api/noticia'; 
 
   // Helper para obtener el token JWT del localStorage
   const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('adminToken'); // Asume que el token de admin se guarda aquí
+    const token = localStorage.getItem('adminToken'); 
     if (token) {
       return {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json', // Añadir Content-Type para JSON body
+        'Content-Type': 'application/json', 
       };
     }
-    return {}; // Retorna un objeto vacío si no hay token, que es válido para HeadersInit
+    return {}; 
+  };
+
+  const showInlineMessage = (type: 'success' | 'danger', text: string) => {
+    setInlineMessage({ type, text });
+    setTimeout(() => {
+      setInlineMessage(null);
+    }, 5000); 
   };
 
   // ==========================================================
@@ -57,23 +66,28 @@ const MainContent: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(API_BASE_URL); // Esta ruta es pública
+      setInlineMessage(null); 
+
+      // Si el backend requiere autenticación/autorización para GET /api/noticia,
+      // y el token no es válido o el usuario no es admin, el backend debe devolver un error.
+      const response = await fetch(API_BASE_URL, { headers: getAuthHeaders() }); 
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.msg || 'Error al obtener las noticias.');
       }
-      const data: any[] = await response.json(); // Backend devuelve NoticiaID, Titulo, Descripcion, Foto
+      const data: any[] = await response.json(); 
 
       const mappedData: DetalleNoticia[] = data.map(noticia => ({
         id: noticia.NoticiaID,
         titulo: noticia.Titulo,
         descripcion: noticia.Descripcion,
-        foto: noticia.Foto || null, // Usa la URL directamente del backend
+        foto: noticia.Foto || null, 
       }));
       setDatosNoticias(mappedData);
     } catch (err: any) {
       console.error("Error al cargar/recargar noticias:", err);
-      setError(err.message || "No se pudieron cargar las noticias.");
+      setError(err.message || "No se pudo cargar la lista de noticias.");
     } finally {
       setLoading(false);
     }
@@ -81,7 +95,7 @@ const MainContent: React.FC = () => {
 
   useEffect(() => {
     refreshNoticias();
-  }, []); // Se ejecuta solo una vez al montar el componente
+  }, []);
 
   // ==========================================================
   // AGREGAR NOTICIA
@@ -100,7 +114,7 @@ const MainContent: React.FC = () => {
     const body = JSON.stringify({
       Titulo: nuevaNoticiaInput.titulo,
       Descripcion: nuevaNoticiaInput.descripcion,
-      Foto: nuevaNoticiaInput.foto || null, // Envía la URL de la foto o null
+      Foto: nuevaNoticiaInput.foto || null, 
     });
 
     try {
@@ -116,11 +130,12 @@ const MainContent: React.FC = () => {
       }
       const data = await response.json();
       console.log("Noticia agregada con éxito:", data.noticia);
-      await refreshNoticias(); // Recarga la lista de noticias desde el backend
+      await refreshNoticias();
       handleCerrarAgregarModal();
+      showInlineMessage("success", "Noticia agregada con éxito."); 
     } catch (err: any) {
       console.error("Error al agregar noticia:", err);
-      alert(`Error al agregar noticia: ${err.message}`); // Usar un modal de alerta
+      showInlineMessage("danger", err.message || "Ocurrió un error desconocido al agregar la noticia."); 
     }
   };
 
@@ -143,13 +158,13 @@ const MainContent: React.FC = () => {
     const body = JSON.stringify({
       Titulo: datosEditados.titulo,
       Descripcion: datosEditados.descripcion,
-      Foto: datosEditados.foto || null, // Envía la URL de la foto o null
+      Foto: datosEditados.foto || null,
     });
 
     try {
       const response = await fetch(`${API_BASE_URL}/${datosEditados.id}`, {
         method: 'PUT',
-        headers: headers,
+        headers: headers, 
         body: body,
       });
 
@@ -161,9 +176,10 @@ const MainContent: React.FC = () => {
       console.log("Noticia actualizada con éxito:", data.noticia);
       await refreshNoticias();
       handleCerrarEditarModal();
+      showInlineMessage("success", "Noticia actualizada con éxito."); 
     } catch (err: any) {
       console.error("Error al guardar cambios de noticia:", err);
-      alert(`Error al guardar cambios: ${err.message}`); // Usar un modal de alerta
+      showInlineMessage("danger", err.message || "Ocurrió un error desconocido al guardar los cambios."); 
     }
   };
 
@@ -185,12 +201,12 @@ const MainContent: React.FC = () => {
   };
 
   const confirmarEliminarNoticia = async (id: number): Promise<void> => {
-    const headers = getAuthHeaders();
+    const headers = getAuthHeaders(); 
 
     try {
       const response = await fetch(`${API_BASE_URL}/${id}`, {
         method: 'DELETE',
-        headers: headers,
+        headers: headers, 
       });
 
       if (!response.ok) {
@@ -201,9 +217,10 @@ const MainContent: React.FC = () => {
       console.log("Noticia eliminada con éxito:", data.msg);
       await refreshNoticias();
       handleCerrarEliminarModal();
+      showInlineMessage("success", "Noticia eliminada con éxito."); 
     } catch (err: any) {
       console.error("Error al eliminar noticia:", err);
-      alert(`Error al eliminar noticia: ${err.message}`); // Usar un modal de alerta
+      showInlineMessage("danger", err.message || "Ocurrió un error desconocido al eliminar la noticia."); 
     }
   };
 
@@ -215,6 +232,9 @@ const MainContent: React.FC = () => {
       <div className="main-content">
         <div className="container-fluid px-4 py-3 text-center">
           <p>Cargando noticias...</p>
+          <div className="spinner-border text-danger" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
         </div>
       </div>
     );
@@ -225,7 +245,7 @@ const MainContent: React.FC = () => {
       <div className="main-content">
         <div className="container-fluid px-4 py-3 text-center text-danger">
           <p>Error: {error}</p>
-          <p>Asegúrate de que el servidor backend esté corriendo y de que tengas permisos si la ruta lo requiere.</p>
+          <p>Asegúrate de que el servidor backend esté corriendo y de que el usuario tenga permisos de administrador.</p>
         </div>
       </div>
     );
@@ -240,6 +260,14 @@ const MainContent: React.FC = () => {
             <i className="bi bi-plus-circle-fill"></i> Agregar
           </button>
         </div>
+        
+        {inlineMessage && (
+          <div className={`alert alert-${inlineMessage.type} alert-dismissible fade show`} role="alert">
+            {inlineMessage.text}
+            <button type="button" className="btn-close" onClick={() => setInlineMessage(null)} aria-label="Close"></button>
+          </div>
+        )}
+
         <div className="row">
           <div className="col">
             <div className="card">
@@ -265,14 +293,12 @@ const MainContent: React.FC = () => {
                           <td>{noticia.id}</td>
                           <td>
                             <div className="user-foto">
-                              {/* Muestra la foto de la noticia o un placeholder */}
-                              {/* Usa la URL de la foto directamente del backend */}
                               {noticia.foto ? (
                                 <img 
                                   src={noticia.foto} 
                                   alt={noticia.titulo} 
                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                  onError={(e) => { // Añadido manejador de errores
+                                  onError={(e) => { 
                                     (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/cccccc/000000?text=No+Foto';
                                   }}
                                 />
@@ -308,6 +334,7 @@ const MainContent: React.FC = () => {
                     onCerrar={handleCerrarEditarModal}
                     onGuardar={handleGuardarCambios}
                     noticiaActual={getNoticiaToEdit()}
+                    onShowMessage={showInlineMessage} 
                   />
                 )}
 
@@ -318,6 +345,7 @@ const MainContent: React.FC = () => {
                     noticiaId={noticiaAEliminar.id}
                     nombreNoticia={noticiaAEliminar.titulo}
                     onEliminar={confirmarEliminarNoticia}
+                    onShowMessage={showInlineMessage} 
                   />
                 )}
 
@@ -326,6 +354,7 @@ const MainContent: React.FC = () => {
                     show={isAgregarModalOpen}
                     onCerrar={handleCerrarAgregarModal}
                     onAgregar={handleAgregarNoticia}
+                    onShowMessage={showInlineMessage} 
                   />
                 )}
               </div>

@@ -1,69 +1,254 @@
 import { useState, useEffect } from 'react';
-import type { CarritoItem } from '../carrito/DetalleCarrito'; 
-import { imagenes } from '../carrito/DetalleCarrito';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/Carrito.css';
 
-import CarroVacio from '../../imagenes/CarroVacio.png';
+import CarroVacio from '../../imagenes/CarroVacio.png'; 
 import BarraNav from '../catalogo/BarraNavUser';
+
+export interface CarritoItem {
+  id: number; 
+  nombre: string;
+  precio: number;
+  cantidad: number;
+  imagen: string | null; 
+  stockDisponible: number; 
+}
 
 function CarritoPage() {
   const navigate = useNavigate();
-  const obtenerCarrito = (): CarritoItem[] => {
-    const carritoGuardado = localStorage.getItem('carrito');
-    return carritoGuardado ? JSON.parse(carritoGuardado) : [];
-  };
+  const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [inlineMessage, setInlineMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
-  const [carritoItems, setCarritoItems] = useState<CarritoItem[]>(obtenerCarrito());
+  const API_BASE_URL = 'http://localhost:3001/api/carrito'; 
+  const STATIC_IMAGES_BASE_URL = 'http://localhost:3001/static/'; 
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setCarritoItems(obtenerCarrito());
+  const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem('userToken'); 
+    console.log('DEBUG: getAuthHeaders - Token recuperado de localStorage (userToken):', token ? 'Presente' : 'Ausente'); 
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
     };
 
+    if (token) {
+      (headers as Record<string, string>).Authorization = `Bearer ${token}`; 
+      console.log('DEBUG: getAuthHeaders - Encabezado Authorization configurado.'); 
+    } else {
+      console.log('DEBUG: getAuthHeaders - No se encontró token en localStorage. Encabezado Authorization NO configurado.'); 
+    }
+    return headers; 
+  };
+
+  const showInlineMessage = (type: 'success' | 'danger', text: string) => {
+    setInlineMessage({ type, text });
+    setTimeout(() => {
+      setInlineMessage(null);
+    }, 5000); 
+  };
+
+  // ==========================================================
+  // FETCH INICIAL Y RECARGA DEL CARRITO
+  // ==========================================================
+  const fetchCarritoItems = async () => {
+    setLoading(true);
+    setError(null);
+    setInlineMessage(null); 
+
+    const headers = getAuthHeaders();
+    const authorizationHeader = (headers as Record<string, string>)['Authorization'];
+
+    if (!authorizationHeader) { 
+      console.log('DEBUG: fetchCarritoItems - No hay encabezado Authorization. Mostrando error de inicio de sesión.'); 
+      setError("Debes iniciar sesión para ver tu carrito.");
+      setLoading(false);
+      return;
+    }
+    console.log('DEBUG: fetchCarritoItems - Encabezado Authorization presente. Intentando fetch del carrito.'); 
+
+    try {
+      const response = await fetch(API_BASE_URL, { headers });
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+            setError("Tu sesión ha expirado o no estás autorizado. Por favor, inicia sesión de nuevo.");
+            localStorage.removeItem('userToken');
+            console.log('DEBUG: fetchCarritoItems - Error 401, userToken removido.');
+        } else {
+            throw new Error(errorData.msg || 'Error al obtener los ítems del carrito.');
+        }
+      } else {
+        const data = await response.json();
+        setCarritoItems(data.items);
+        console.log('DEBUG: fetchCarritoItems - Carrito cargado con éxito.');
+      }
+    } catch (err: any) {
+      console.error("Error al cargar el carrito:", err);
+      setError(err.message || "No se pudo cargar el carrito.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initialToken = localStorage.getItem('userToken');
+    if (initialToken) {
+      console.log('DEBUG: useEffect - userToken encontrado al inicio. Iniciando fetch.');
+      fetchCarritoItems();
+    } else {
+      console.log('DEBUG: useEffect - No se encontró userToken al inicio. Mostrando error de login.');
+      setError("Debes iniciar sesión para ver tu carrito.");
+      setLoading(false);
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userToken') { 
+        const newToken = localStorage.getItem('userToken');
+        console.log('DEBUG: StorageEvent - Cambio en userToken detectado. Nuevo token:', newToken ? 'Presente' : 'Ausente');
+        if (newToken) {
+          fetchCarritoItems(); 
+        } else {
+          setCarritoItems([]);
+          setError("Debes iniciar sesión para ver tu carrito.");
+          setLoading(false);
+        }
+      }
+    };
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, []); 
 
-  const guardarCarrito = (carrito: CarritoItem[]) => {
-    localStorage.setItem('carrito', JSON.stringify(carrito));
-  };
-
-  const actualizarCarrito = (nuevoCarrito: CarritoItem[]) => {
-    guardarCarrito(nuevoCarrito);
-    setCarritoItems(nuevoCarrito);
-  };
-
-  const handleCantidadChange = (itemId: number, newCantidad: number) => {
-    const nuevoCarrito = carritoItems.map((item) =>
-      item.id === itemId ? { ...item, cantidad: Math.max(1, newCantidad) } : item
-    );
-    actualizarCarrito(nuevoCarrito);
-  };
-
-  const handleEliminarItem = (itemId: number) => {
-    const nuevoCarrito = carritoItems.filter((item) => item.id !== itemId);
-    actualizarCarrito(nuevoCarrito);
-  };
-
-  const handleVaciarCarrito = () => {
-    localStorage.removeItem('carrito');
-    setCarritoItems([]);
-  };
-
+  // Cálculos de subtotal y total
   const envio = 15.0;
   const subtotal = carritoItems.reduce((acc, item) => acc + (item.precio || 0) * item.cantidad, 0);
-  const total = subtotal + envio;
+  const total = subtotal + (carritoItems.length > 0 ? envio : 0); 
+
+  const handleCantidadChange = async (itemId: number, newCantidad: number) => {
+    const cantidadFinal = Math.max(1, newCantidad); 
+    const itemToUpdate = carritoItems.find(item => item.id === itemId);
+
+    if (!itemToUpdate || cantidadFinal === itemToUpdate.cantidad) {
+      return; 
+    }
+
+    if (cantidadFinal > itemToUpdate.stockDisponible) {
+      showInlineMessage('danger', `No hay suficiente stock para el juego "${itemToUpdate.nombre}". Stock disponible: ${itemToUpdate.stockDisponible}`);
+      return;
+    }
+
+    const headers = getAuthHeaders();
+    const body = JSON.stringify({ juegoId: itemId, cantidad: cantidadFinal });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/items`, {
+        method: 'POST',
+        headers,
+        body,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Error al actualizar la cantidad del ítem.');
+      }
+      await fetchCarritoItems(); 
+      showInlineMessage('success', 'Cantidad actualizada.');
+    } catch (err: any) {
+      console.error("Error al actualizar cantidad:", err);
+      showInlineMessage('danger', err.message || 'Error al actualizar la cantidad del ítem.');
+    }
+  };
+
+  const handleEliminarItem = async (itemId: number) => {
+    const headers = getAuthHeaders();
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/items/${itemId}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Error al eliminar el ítem del carrito.');
+      }
+      await fetchCarritoItems(); 
+      showInlineMessage('success', 'Ítem eliminado del carrito.');
+    } catch (err: any) {
+      console.error("Error al eliminar ítem:", err);
+      showInlineMessage('danger', err.message || 'Error al eliminar el ítem del carrito.');
+    }
+  };
+
+  const handleVaciarCarrito = async () => {
+    const headers = getAuthHeaders();
+
+    try {
+      const response = await fetch(API_BASE_URL, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Error al vaciar el carrito.');
+      }
+      await fetchCarritoItems(); 
+      showInlineMessage('success', 'Carrito vaciado con éxito.');
+    } catch (err: any) {
+      console.error("Error al vaciar carrito:", err);
+      showInlineMessage('danger', err.message || 'Error al vaciar el carrito.');
+    }
+  };
 
   const handleFinalizarCompra = () => {
     navigate('/Pago');
   };
+
+  // ==========================================================
+  // Renderizado Condicional
+  // ==========================================================
+  if (loading) {
+    return (
+      <div className="inicio-page">
+        <BarraNav onAbrirFiltroLateral={() => {}}/>
+        <div className="contenedor-principal">
+          <div className="container row text-center py-5">
+            <p>Cargando carrito...</p>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="inicio-page">
+        <BarraNav onAbrirFiltroLateral={() => {}}/>
+        <div className="contenedor-principal">
+          <div className="container row text-center py-5">
+            <div className="alert alert-danger" role="alert">
+              <p>Error: {error}</p>
+              {error === "Debes iniciar sesión para ver tu carrito." && (
+                <p>Asegúrate de que el servidor backend esté corriendo y de que hayas iniciado sesión.</p>
+              )}
+               {error === "Tu sesión ha expirado o no estás autorizado. Por favor, inicia sesión de nuevo." && (
+                <p>Por favor, inicia sesión de nuevo para continuar.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="inicio-page">
@@ -73,6 +258,13 @@ function CarritoPage() {
       {/* Contenido principal */}
       <div className="contenedor-principal">
         <div className="container row">
+          {inlineMessage && (
+            <div className={`alert alert-${inlineMessage.type} alert-dismissible fade show`} role="alert">
+              {inlineMessage.text}
+              <button type="button" className="btn-close" onClick={() => setInlineMessage(null)} aria-label="Close"></button>
+            </div>
+          )}
+
           {/* Lista del carrito */}
           <div className="col-md-7" id="contenedor-carrito">
             {carritoItems.length === 0 ? (
@@ -99,8 +291,16 @@ function CarritoPage() {
                       <tr key={item.id}>
                         <td>
                           <div className="item-info">
-                            {item.nombre && (item.nombre in imagenes) && (
-                              <img src={imagenes[item.nombre as keyof typeof imagenes]} alt={item.nombre} />
+                            {item.imagen ? (
+                              <img 
+                                src={`${STATIC_IMAGES_BASE_URL}${item.imagen}`} 
+                                alt={item.nombre} 
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/cccccc/000000?text=No+Imagen';
+                                }}
+                              />
+                            ) : (
+                              <img src="https://placehold.co/100x100/cccccc/000000?text=No+Imagen" alt="No Imagen" />
                             )}
                           </div>
                         </td>

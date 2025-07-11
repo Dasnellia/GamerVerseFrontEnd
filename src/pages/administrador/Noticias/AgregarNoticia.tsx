@@ -2,37 +2,31 @@ import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import '../../../css/AgregarNoticia.css'; 
 
-// Estructura Noticia Nueva (DEFINICIÓN CONSISTENTE)
-interface NewNewsInput {
-  titulo: string;
-  descripcion: string;
-  foto?: string | null; // La foto es una URL (string) o null
-}
+import type { NewNewsInput } from './ListadoNoticias'; 
 
-// Estructura de AgregarNoticiaProps (DEFINICIÓN CONSISTENTE)
 interface AgregarNoticiaProps {
   onCerrar: () => void;
-  onAgregar: (nuevaNoticia: NewNewsInput) => Promise<void>; // <-- CORRECCIÓN: onAgregar es Promise<void>
+  onAgregar: (nuevaNoticia: NewNewsInput) => Promise<void>;
+  onShowMessage: (type: 'success' | 'danger', text: string) => void; 
   show: boolean;
 }
 
-const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, show }) => {
+const AgregarNoticia: React.FC<AgregarNoticiaProps> = ({ onCerrar, onAgregar, onShowMessage, show }) => {
   const [titulo, setTitulo] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null); // Estado para la URL de la foto
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null); 
 
   // Enviar Formulario que se lleno
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onAgregar({ titulo, descripcion, foto: fotoUrl }); // Pasa la URL de la foto
-      setTitulo(''); // Limpia el estado
+      await onAgregar({ titulo, descripcion, foto: fotoUrl }); 
+      setTitulo('');
       setDescripcion('');
       setFotoUrl(null);
-      // El modal se cerrará automáticamente en el padre después de refreshNoticias
-    } catch (error: any) { // Añadido : any para tipar el error
+    } catch (error: any) { 
       console.error("Error al agregar noticia desde el modal:", error);
-      alert(`Error al agregar noticia: ${error.message}`); // Usar un modal de alerta
+      onShowMessage('danger', `Error al agregar noticia: ${error.message}`); 
     }
   };
 

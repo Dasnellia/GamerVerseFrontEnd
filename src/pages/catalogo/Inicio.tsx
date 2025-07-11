@@ -1,12 +1,10 @@
-// src/components/Inicio.tsx
 import BarraCarrito from '../carrito/BarraCarrito'; 
 import { handleAgregarAlCarrito } from '../carrito/DetalleCarrito';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/Inicio.css';
-import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
 import Footer from './Footer';
 import type { Juego as JuegoCompleto, Comentario } from './DetalleJuego';
@@ -15,7 +13,7 @@ import { productosIniciales } from './DetalleJuego';
 
 import BarraNav from './BarraNavUser';
 
-const API_NOTICIAS_URL = 'http://localhost:3001/api/noticia'; 
+const API_NOTICIAS_URL = 'http://localhost:3001/api/noticia/public'; 
 
 interface Noticia {
   id: number; 
@@ -59,48 +57,21 @@ const Inicio = () => {
   const [juegoSeleccionado, setJuegoSeleccionado] = useState<JuegoCompleto | null>(null);
   const [mostrarModal, setMostrarModal] = useState(false);
 
-  const navigate = useNavigate(); // Inicializa useNavigate
-
   // Función para cargar las noticias desde el backend
   const fetchNoticias = async () => {
-    // A. Obtener el token del localStorage
-    const token = localStorage.getItem('userToken');
-
-    // B. Preparar las cabeceras, incluyendo el token si existe
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    if (token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    } else {
-      console.warn("Advertencia: No se encontró token de usuario. La solicitud a /api/noticia podría fallar si la ruta está protegida.");
-      // Opcional: Si las noticias SIEMPRE requieren autenticación, podrías redirigir aquí.
-      // Pero es común que las noticias sean públicas o semipúblicas.
-      // Si la ruta no está protegida, no pasa nada si no hay token.
-    }
-
     try {
-      setLoadingNoticias(true); 
-      const response = await fetch(API_NOTICIAS_URL, { headers }); // C. Pasar las cabeceras a la petición
-
+      setLoadingNoticias(true);
+      const response = await fetch(API_NOTICIAS_URL); 
+      
       if (!response.ok) {
-        // D. Manejo de errores de autenticación/autorización
-        if (response.status === 401 || response.status === 403) {
-          setErrorNoticias('No autorizado para ver las noticias. Tu sesión puede haber expirado.');
-          localStorage.clear(); // Limpia todos los datos de sesión para forzar un nuevo login
-          setTimeout(() => {
-            navigate('/IniciarSesion'); // Redirige a la página de login
-          }, 2000);
-        } else {
-          throw new Error('Error al cargar las noticias. Código: ' + response.status);
-        }
+      throw new Error('Error al cargar las noticias.');
       }
       const data: any[] = await response.json();
       const mappedNoticias: Noticia[] = data.map(noticia => ({
-        id: noticia.NoticiaID,
-        titulo: noticia.Titulo,
-        descripcion: noticia.Descripcion,
-        foto: noticia.Foto || null, 
+      id: noticia.NoticiaID,
+      titulo: noticia.Titulo,
+      descripcion: noticia.Descripcion,
+      foto: noticia.Foto || null,  
       }));
       setNoticiasCarrusel(mappedNoticias);
     } catch (error: any) {
@@ -110,10 +81,11 @@ const Inicio = () => {
       setLoadingNoticias(false);
     }
   };
-
-  useEffect(() => {
-    fetchNoticias();
-  }, [navigate]); // Añade 'navigate' a las dependencias para que useEffect no de warning
+  
+// Carga las noticias cuando el componente se monta
+useEffect(() => {
+  fetchNoticias();
+}, []); 
 
   const abrirModal = (juegoId: number) => {
     const juegoCompleto = juegosData.find(p => p.id === juegoId);
@@ -137,7 +109,7 @@ const Inicio = () => {
     const imagen = boton.dataset.imagen;
 
     if (id && nombre && precio !== undefined && imagen) {
-        handleAgregarAlCarrito(evento);
+      handleAgregarAlCarrito(evento);
     }
   };
 

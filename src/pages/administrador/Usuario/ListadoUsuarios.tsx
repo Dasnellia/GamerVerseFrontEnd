@@ -1,7 +1,5 @@
-// src/components/ListadoUsuarios.tsx
 import { useState, useEffect } from 'react';
 import NavBarra from "../BarraNavAdmin"; 
-import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
 import '../../../css/ListaUser.css'; 
 
@@ -10,7 +8,7 @@ interface User {
   Nombre: string; 
   Correo: string;
   Foto: string | null; 
-  Admin: boolean; // Aunque el backend puede devolver 'tipo', esta interfaz espera 'Admin'
+  Admin: boolean;
   Verificado: boolean;
 }
 
@@ -18,50 +16,30 @@ const MainContent = () => {
   const [usuarios, setUsuarios] = useState<User[]>([]); 
   const [loading, setLoading] = useState(true); 
   const [error, setError] = useState<string | null>(null); 
-  const navigate = useNavigate(); // Inicializa useNavigate
 
   useEffect(() => {
     const cargarUsuarios = async () => {
-      // *** CAMBIO CLAVE AQUÍ: Usamos 'userToken' ***
-      const token = localStorage.getItem('userToken'); 
-      const userRole = localStorage.getItem('userRole'); // Obtener el rol del usuario
-
-      // C. Verificar si el usuario tiene un token y si es administrador
-      if (!token || userRole !== 'admin') {
-        setError("Acceso denegado. No tienes permisos de administrador o tu sesión ha expirado. Redirigiendo...");
-        localStorage.clear(); // Limpia cualquier dato de sesión si el acceso es denegado
-        setTimeout(() => {
-          navigate('/IniciarSesion'); // Redirige al login
-        }, 3000);
-        return; // Detener la ejecución
-      }
-
       try {
         setLoading(true); 
         setError(null); 
+
+        const tokenAdmin = localStorage.getItem('adminToken'); 
 
         const headers: HeadersInit = {
           'Content-Type': 'application/json',
         };
 
-        // Si existe un token válido (ya verificado arriba), añádelo
-        (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-        
+        if (tokenAdmin) {
+          (headers as Record<string, string>)['Authorization'] = `Bearer ${tokenAdmin}`;
+        } else {
+          console.warn("Advertencia: No se encontró token de administrador. La solicitud podría fallar si la ruta está protegida.");
+        }
+
         const response = await fetch('http://localhost:3001/api/admin/users', { headers });
 
         if (!response.ok) {
-          // Si el servidor responde 401 o 403, es un problema de autenticación/autorización
-          if (response.status === 401 || response.status === 403) {
-            const errorData = await response.json();
-            setError(errorData.msg || "Acceso no autorizado. Tu sesión puede haber expirado.");
-            localStorage.clear(); // Limpia los datos de sesión
-            setTimeout(() => {
-              navigate('/IniciarSesion'); // Redirige al login
-            }, 3000);
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.msg || `Error al cargar usuarios: ${response.status} ${response.statusText}`);
-          }
+          const errorData = await response.json();
+          throw new Error(errorData.msg || `Error al cargar usuarios: ${response.status} ${response.statusText}`);
         }
 
         const data: User[] = await response.json();
@@ -75,7 +53,7 @@ const MainContent = () => {
     };
 
     cargarUsuarios(); 
-  }, [navigate]); // Añade 'navigate' a las dependencias
+  }, []);
 
   if (loading) {
     return (
@@ -95,7 +73,7 @@ const MainContent = () => {
       <div className="main-content">
         <div className="container-fluid px-4 py-3 text-center text-danger">
           <p>Error: {error}</p>
-          {/* El mensaje de redirección ya está en el estado 'error', no necesita un p aparte */}
+          <p>Asegúrate de que el servidor backend esté corriendo y que el usuario tenga permisos de administrador.</p>
         </div>
       </div>
     );
