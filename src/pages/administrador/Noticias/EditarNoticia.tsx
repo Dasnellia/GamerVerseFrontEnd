@@ -2,59 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import '../../../css/EditarNoticia.css';
 
-// Estructura DetalleNoticia (DEFINICIÓN LOCAL Y CONSISTENTE)
-// Debe ser idéntica a la de ListadoNoticias.tsx
 interface DetalleNoticia {
   id: number;
-  foto?: string | null; // <-- CORRECCIÓN: Permite string, null o undefined
+  foto?: string | null; 
   titulo: string;
   descripcion: string;
 }
 
-// Estructura Editar Noticia Props (DEFINICIÓN LOCAL Y CONSISTENTE)
+// Estructura Editar Noticia Props
 interface EditarNoticiaProps {
   noticiaActual: DetalleNoticia | null;
   onCerrar: () => void;
-  onGuardar: (datosEditados: DetalleNoticia) => Promise<void>; // <-- CORRECCIÓN: onGuardar devuelve Promise<void>
-  onShowMessage: (type: 'success' | 'danger', text: string) => void; // *** AÑADIDO: Prop para mostrar mensajes ***
+  onGuardar: (datosEditados: DetalleNoticia) => Promise<void>;
+  onShowMessage: (type: 'success' | 'danger', text: string) => void;
   show: boolean;
 }
 
-// *** AÑADIDO: 'onShowMessage' a las props desestructuradas ***
 const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, onGuardar, onShowMessage, show }) => {
-  // CORRECCIÓN: Cambiado 'setName' a 'setTitulo' para consistencia
   const [titulo, setTitulo] = useState<string>(noticiaActual?.titulo || '');
   const [descripcion, setDescripcion] = useState<string>(noticiaActual?.descripcion || '');
-  // CORRECCIÓN: Estado para la URL de la foto, permite string o null
   const [fotoUrl, setFotoUrl] = useState<string | null>(noticiaActual?.foto ?? null); 
 
   useEffect(() => {
     if (noticiaActual) {
-      setTitulo(noticiaActual.titulo); // CORRECCIÓN: Usar setTitulo
+      setTitulo(noticiaActual.titulo);
       setDescripcion(noticiaActual.descripcion);
-      setFotoUrl(noticiaActual.foto ?? null); // Sincroniza la URL de la foto, usando null para undefined
+      setFotoUrl(noticiaActual.foto ?? null); 
     } else {
-      setTitulo(''); // CORRECCIÓN: Usar setTitulo
+      setTitulo(''); 
       setDescripcion('');
       setFotoUrl(null);
     }
   }, [noticiaActual]);
 
   // Envia Formulario
-  const handleSubmit = async (e: React.FormEvent) => { // <-- CORRECCIÓN: Función asíncrona
+  const handleSubmit = async (e: React.FormEvent) => { 
     e.preventDefault();
     if (noticiaActual) {
       try {
-        await onGuardar({ // <-- CORRECCIÓN: await porque onGuardar es Promise<void>
+        await onGuardar({ 
           ...noticiaActual,
           titulo: titulo,
           descripcion: descripcion,
-          foto: fotoUrl // <-- CORRECCIÓN: Pasa la URL de la foto (string o null)
+          foto: fotoUrl 
         });
-        // El modal se cerrará automáticamente en el padre después de refreshNoticias
-      } catch (error: any) { // Añadido : any para tipar el error
+      } catch (error: any) { 
         console.error("Error al guardar cambios de noticia desde el modal:", error);
-        // *** MODIFICADO: Reemplazado alert() por onShowMessage() ***
         onShowMessage('danger', `Error al guardar cambios: ${error.message}`); 
       }
     }
@@ -62,7 +55,7 @@ const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, 
 
   // Función para establecer fotoUrl a null cuando se quiere eliminar la foto existente
   const handleEliminarFotoActual = () => {
-    setFotoUrl(null); // Esto indicará al padre que la foto debe ser eliminada en el backend
+    setFotoUrl(null); 
   };
 
   return (
@@ -75,11 +68,11 @@ const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, 
           {noticiaActual ? (
             <>
               <Form.Group className="mb-3">
-                <Form.Label>Título</Form.Label> {/* CORRECCIÓN: Cambiado a Título */}
+                <Form.Label>Título</Form.Label>
                 <Form.Control
                   type="text"
                   value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)} // CORRECCIÓN: Usar setTitulo
+                  onChange={(e) => setTitulo(e.target.value)} 
                   required
                   className="bg-secondary text-white"
                 />
@@ -96,21 +89,20 @@ const EditarNoticia: React.FC<EditarNoticiaProps> = ({ noticiaActual, onCerrar, 
                 />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>URL de la Foto</Form.Label> {/* CORRECCIÓN: Cambiado a URL de la Foto */}
+                <Form.Label>URL de la Foto</Form.Label> 
                 <Form.Control
-                  type="text" // <-- CORRECCIÓN: Tipo de input es 'text' para URL
-                  value={fotoUrl || ''} // Muestra la URL actual o una cadena vacía
-                  onChange={(e) => setFotoUrl(e.target.value || null)} // Guarda la URL o null si está vacío
+                  type="text"
+                  value={fotoUrl || ''} 
+                  onChange={(e) => setFotoUrl(e.target.value || null)}
                   className="bg-secondary text-white"
                   placeholder="Ej: https://ejemplo.com/imagen.jpg"
                 />
-                {noticiaActual.foto && fotoUrl !== null && ( // Muestra la URL actual si existe y no se ha marcado para borrar
+                {noticiaActual.foto && fotoUrl !== null && ( 
                   <Form.Text className="text-muted">
                     Foto actual: <a href={noticiaActual.foto} target="_blank" rel="noopener noreferrer">{noticiaActual.foto.split('/').pop()}</a>
                   </Form.Text>
                 )}
-                {/* Botón para eliminar la foto actual (establece la URL a null) */}
-                {noticiaActual.foto && fotoUrl !== null && ( // Solo muestra si hay foto actual y no se ha marcado para eliminar
+                {noticiaActual.foto && fotoUrl !== null && ( 
                   <Button 
                     variant="outline-danger" 
                     size="sm" 

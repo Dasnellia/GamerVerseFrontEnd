@@ -1,6 +1,6 @@
 import BarraCarrito from '../carrito/BarraCarrito'; 
 import { handleAgregarAlCarrito } from '../carrito/DetalleCarrito';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -9,22 +9,17 @@ import '../../css/Inicio.css';
 import Footer from './Footer';
 import type { Juego as JuegoCompleto, Comentario } from './DetalleJuego';
 import DetalleJuego from './DetalleJuego';
-import { productosIniciales } from './DetalleJuego'; // Asumo que productosIniciales es la fuente de datos inicial
+import { productosIniciales } from './DetalleJuego'; 
 
-// Los banners estáticos ya no se importan ni se usan en el carrusel
-// import Banner1 from '../../imagenes/Verano.png';
-// import Banner2 from '../../imagenes/Promo.png';
-// import Banner3 from '../../imagenes/Juego-Nuevo.png';
 import BarraNav from './BarraNavUser';
 
-const API_NOTICIAS_URL = 'http://localhost:3001/api/noticia'; // URL de tu API de noticias
+const API_NOTICIAS_URL = 'http://localhost:3001/api/noticia/public'; 
 
-// Interfaz para la estructura de una Noticia (debe coincidir con tu backend)
 interface Noticia {
-  id: number; // Corresponde a NoticiaID
-  titulo: string; // Corresponde a Titulo
-  descripcion: string; // Corresponde a Descripcion
-  foto?: string | null; // Corresponde a Foto (URL completa o null)
+  id: number; 
+  titulo: string; 
+  descripcion: string; 
+  foto?: string | null; 
 }
 
 interface JuegoBasico {
@@ -36,10 +31,9 @@ interface JuegoBasico {
   rating: number;
   imagen: string;
   descripcion?: string;
-  lanzamiento?: string; // Añadido para consistencia con la lógica de filtrado/ordenamiento
+  lanzamiento?: string; 
 }
 
-// Mapeo inicial de productosIniciales a JuegoBasico
 const juegosBasicosIniciales: JuegoBasico[] = productosIniciales.map(juego => ({
   id: juego.id,
   nombre: juego.nombre,
@@ -49,14 +43,14 @@ const juegosBasicosIniciales: JuegoBasico[] = productosIniciales.map(juego => ({
   rating: juego.rating,
   imagen: juego.imagen,
   descripcion: juego.descripcion,
-  lanzamiento: juego.lanzamiento // Asegura que 'lanzamiento' se mapee
+  lanzamiento: juego.lanzamiento 
 }));
 
 const Inicio = () => {
   const [juegosData, setJuegosData] = useState<JuegoCompleto[]>(productosIniciales);
-  const [noticiasCarrusel, setNoticiasCarrusel] = useState<Noticia[]>([]); // Nuevo estado para las noticias del carrusel
+  const [noticiasCarrusel, setNoticiasCarrusel] = useState<Noticia[]>([]); 
   const [loadingNoticias, setLoadingNoticias] = useState<boolean>(true);
-  const [errorNoticias, setErrorNoticias] = useState<string | null>(null); // Se mantiene para depuración
+  const [errorNoticias, setErrorNoticias] = useState<string | null>(null); 
 
   const [nombreBusqueda, setNombreBusqueda] = useState('');
   const [juegosFiltrados, setJuegosFiltrados] = useState<JuegoBasico[]>(juegosBasicosIniciales);
@@ -67,32 +61,31 @@ const Inicio = () => {
   const fetchNoticias = async () => {
     try {
       setLoadingNoticias(true);
-      const response = await fetch(API_NOTICIAS_URL);
+      const response = await fetch(API_NOTICIAS_URL); 
+      
       if (!response.ok) {
-        throw new Error('Error al cargar las noticias.');
+      throw new Error('Error al cargar las noticias.');
       }
       const data: any[] = await response.json();
-      // Mapea los datos del backend a la interfaz Noticia
       const mappedNoticias: Noticia[] = data.map(noticia => ({
-        id: noticia.NoticiaID,
-        titulo: noticia.Titulo,
-        descripcion: noticia.Descripcion,
-        // Usa la URL de la foto tal cual viene del backend
-        foto: noticia.Foto || null, 
+      id: noticia.NoticiaID,
+      titulo: noticia.Titulo,
+      descripcion: noticia.Descripcion,
+      foto: noticia.Foto || null,  
       }));
       setNoticiasCarrusel(mappedNoticias);
     } catch (error: any) {
       console.error("Error al cargar noticias para el carrusel:", error);
-      setErrorNoticias(error.message); // Guarda el error
+      setErrorNoticias(error.message); 
     } finally {
       setLoadingNoticias(false);
     }
   };
-
-  // Carga las noticias cuando el componente se monta
-  useEffect(() => {
-    fetchNoticias();
-  }, []);
+  
+// Carga las noticias cuando el componente se monta
+useEffect(() => {
+  fetchNoticias();
+}, []); 
 
   const abrirModal = (juegoId: number) => {
     const juegoCompleto = juegosData.find(p => p.id === juegoId);
@@ -116,7 +109,7 @@ const Inicio = () => {
     const imagen = boton.dataset.imagen;
 
     if (id && nombre && precio !== undefined && imagen) {
-        handleAgregarAlCarrito(evento);
+      handleAgregarAlCarrito(evento);
     }
   };
 
@@ -200,7 +193,6 @@ const Inicio = () => {
               <div id="carouselExample" className="carousel slide" data-bs-ride="carousel">
                 <div className="carousel-inner rounded">
                   {loadingNoticias ? (
-                    // Muestra un mensaje de carga mientras se obtienen las noticias
                     <div className="carousel-item active">
                       <img src="https://placehold.co/1200x400/333333/ffffff?text=Cargando+Noticias..." className="d-block w-100" alt="Cargando..." />
                       <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
@@ -209,7 +201,6 @@ const Inicio = () => {
                       </div>
                     </div>
                   ) : noticiasCarrusel.length > 0 ? (
-                    // Muestra las noticias cargadas dinámicamente si hay alguna
                     noticiasCarrusel.map((noticia, index) => (
                       <div className={`carousel-item ${index === 0 ? 'active' : ''}`} key={noticia.id}>
                         <img 
@@ -227,7 +218,6 @@ const Inicio = () => {
                       </div>
                     ))
                   ) : (
-                    // Si no hay noticias (ya sea por error o porque el backend devuelve vacío), muestra un mensaje de "no hay noticias"
                     <div className="carousel-item active">
                       <img src="https://placehold.co/1200x400/555555/ffffff?text=No+hay+noticias+disponibles" className="d-block w-100" alt="No hay noticias" />
                       <div className="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded">
@@ -334,7 +324,7 @@ const Inicio = () => {
       )}
       <BarraCarrito />
       <Footer />
-    </div>  
+    </div> 
   );
 }
 export default Inicio;

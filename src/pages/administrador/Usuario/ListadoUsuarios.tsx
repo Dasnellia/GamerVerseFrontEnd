@@ -29,7 +29,6 @@ const MainContent = () => {
           'Content-Type': 'application/json',
         };
 
-        // Si existe un token, añádelo a la cabecera 'Authorization'.
         if (tokenAdmin) {
           (headers as Record<string, string>)['Authorization'] = `Bearer ${tokenAdmin}`;
         } else {
@@ -38,7 +37,6 @@ const MainContent = () => {
 
         const response = await fetch('http://localhost:3001/api/admin/users', { headers });
 
-        // Verifica si la respuesta de la red fue exitosa (código de estado 200-299)
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.msg || `Error al cargar usuarios: ${response.status} ${response.statusText}`);

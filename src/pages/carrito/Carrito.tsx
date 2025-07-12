@@ -27,9 +27,7 @@ function CarritoPage() {
   const API_BASE_URL = 'http://localhost:3001/api/carrito'; 
   const STATIC_IMAGES_BASE_URL = 'http://localhost:3001/static/'; 
 
-  // Helper para obtener el token JWT del localStorage
   const getAuthHeaders = (): HeadersInit => {
-    // *** CORRECCIÓN REVERTIDA: Ahora buscamos 'userToken' nuevamente. ***
     const token = localStorage.getItem('userToken'); 
     console.log('DEBUG: getAuthHeaders - Token recuperado de localStorage (userToken):', token ? 'Presente' : 'Ausente'); 
     const headers: HeadersInit = {
@@ -45,7 +43,6 @@ function CarritoPage() {
     return headers; 
   };
 
-  // Función para mostrar mensajes inline
   const showInlineMessage = (type: 'success' | 'danger', text: string) => {
     setInlineMessage({ type, text });
     setTimeout(() => {
@@ -64,7 +61,6 @@ function CarritoPage() {
     const headers = getAuthHeaders();
     const authorizationHeader = (headers as Record<string, string>)['Authorization'];
 
-    // Si no hay encabezado de autorización, no intentamos el fetch
     if (!authorizationHeader) { 
       console.log('DEBUG: fetchCarritoItems - No hay encabezado Authorization. Mostrando error de inicio de sesión.'); 
       setError("Debes iniciar sesión para ver tu carrito.");
@@ -77,10 +73,9 @@ function CarritoPage() {
       const response = await fetch(API_BASE_URL, { headers });
       if (!response.ok) {
         const errorData = await response.json();
-        // Si el backend responde con 401 (Unauthorized), es un problema de token
         if (response.status === 401) {
             setError("Tu sesión ha expirado o no estás autorizado. Por favor, inicia sesión de nuevo.");
-            localStorage.removeItem('userToken'); // Limpiar token inválido (usando userToken)
+            localStorage.removeItem('userToken');
             console.log('DEBUG: fetchCarritoItems - Error 401, userToken removido.');
         } else {
             throw new Error(errorData.msg || 'Error al obtener los ítems del carrito.');
@@ -99,8 +94,6 @@ function CarritoPage() {
   };
 
   useEffect(() => {
-    // Verificamos el token al montar el componente
-    // *** CORRECCIÓN REVERTIDA: Ahora buscamos 'userToken' aquí también. ***
     const initialToken = localStorage.getItem('userToken');
     if (initialToken) {
       console.log('DEBUG: useEffect - userToken encontrado al inicio. Iniciando fetch.');
@@ -111,17 +104,13 @@ function CarritoPage() {
       setLoading(false);
     }
 
-    // Listener para cambios en localStorage (útil si el token cambia en otra pestaña o por logout/login)
     const handleStorageChange = (e: StorageEvent) => {
-      // Escuchamos cambios en 'userToken'
-      // *** CORRECCIÓN REVERTIDA: Escuchamos 'userToken'. ***
       if (e.key === 'userToken') { 
         const newToken = localStorage.getItem('userToken');
         console.log('DEBUG: StorageEvent - Cambio en userToken detectado. Nuevo token:', newToken ? 'Presente' : 'Ausente');
         if (newToken) {
-          fetchCarritoItems(); // Si el token aparece, recargamos el carrito
+          fetchCarritoItems(); 
         } else {
-          // Si el token se eliminó (ej. logout), vaciamos el carrito y mostramos el mensaje de login
           setCarritoItems([]);
           setError("Debes iniciar sesión para ver tu carrito.");
           setLoading(false);
@@ -269,7 +258,6 @@ function CarritoPage() {
       {/* Contenido principal */}
       <div className="contenedor-principal">
         <div className="container row">
-          {/* Mensajes inline */}
           {inlineMessage && (
             <div className={`alert alert-${inlineMessage.type} alert-dismissible fade show`} role="alert">
               {inlineMessage.text}

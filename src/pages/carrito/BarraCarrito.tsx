@@ -1,21 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// Eliminamos la importación de 'imagenes' de DetalleCarrito, ya que las imágenes vendrán del backend.
-// import { imagenes } from '../carrito/DetalleCarrito'; 
 import '../../css/BarraCarrito.css';
 
-// ==========================================================
-// INTERFACES (DEFINIDAS AQUÍ PARA CLARIDAD O IMPORTAR DE UN ARCHIVO CENTRAL)
-// Asegúrate de que esta interfaz coincida con la estructura que devuelve tu backend para los ítems del carrito.
-// El backend de carritoService devuelve: id, nombre, precio, cantidad, imagen, stockDisponible
-// ==========================================================
 export interface CarritoItem {
-  id: number; // ID del juego
+  id: number; 
   nombre: string;
   precio: number;
   cantidad: number;
-  imagen: string | null; // Nombre del archivo de imagen (ej. "juego1.jpg")
-  stockDisponible: number; // Stock actual del juego
+  imagen: string | null; 
+  stockDisponible: number; 
 }
 
 const BarraCarrito = () => {
@@ -24,14 +17,11 @@ const BarraCarrito = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE_URL = 'http://localhost:3001/api/carrito'; // URL base para los endpoints del carrito
-  const STATIC_IMAGES_BASE_URL = 'http://localhost:3001/static/'; // URL base para imágenes estáticas del backend
+  const API_BASE_URL = 'http://localhost:3001/api/carrito'; 
+  const STATIC_IMAGES_BASE_URL = 'http://localhost:3001/static/';
 
-  // Helper para obtener el token JWT del localStorage
   const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('userToken'); // Asume que el token del usuario se guarda aquí
-    // Si usas 'adminToken' para usuarios logueados en general, cámbialo aquí:
-    // const token = localStorage.getItem('adminToken'); 
+    const token = localStorage.getItem('userToken'); 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
@@ -50,9 +40,8 @@ const BarraCarrito = () => {
     setError(null);
 
     const headers = getAuthHeaders();
-    // Si no hay token, no intentamos cargar el carrito (o mostramos un mensaje de error)
     if (!(headers as Record<string, string>)['Authorization']) {
-      setCarritoItems([]); // Vaciar carrito si no hay autenticación
+      setCarritoItems([]); 
       setError("Inicia sesión para ver tu carrito.");
       setLoading(false);
       return;
@@ -69,7 +58,7 @@ const BarraCarrito = () => {
     } catch (err: any) {
       console.error("Error al cargar el carrito en BarraCarrito:", err);
       setError(err.message || "No se pudo cargar el carrito.");
-      setCarritoItems([]); // Vaciar carrito en caso de error
+      setCarritoItems([]); 
     } finally {
       setLoading(false);
     }
@@ -78,9 +67,7 @@ const BarraCarrito = () => {
   useEffect(() => {
     fetchCarritoItems();
 
-    // Listener para cambios en localStorage (útil si otras pestañas/componentes modifican el carrito)
     const handleStorageChange = (e: StorageEvent) => {
-      // Re-fetch el carrito si el token del usuario cambia (ej. login/logout)
       if (e.key === 'userToken' || e.key === 'adminToken') {
         fetchCarritoItems();
       }
@@ -106,7 +93,7 @@ const BarraCarrito = () => {
   const cantidadItemsRestantes = carritoItems.length - itemsMostrados.length;
 
   // ==========================================================
-  // ELIMINAR ÍTEM DEL CARRITO (AHORA CON FETCH)
+  // ELIMINAR ÍTEM DEL CARRITO 
   // ==========================================================
   const handleEliminarItem = async (itemId: number) => {
     const headers = getAuthHeaders();
@@ -121,11 +108,9 @@ const BarraCarrito = () => {
         const errorData = await response.json();
         throw new Error(errorData.msg || 'Error al eliminar el ítem del carrito.');
       }
-      await fetchCarritoItems(); // Recargar el carrito para reflejar el cambio
+      await fetchCarritoItems(); 
     } catch (err: any) {
       console.error("Error al eliminar ítem desde BarraCarrito:", err);
-      // Aquí podrías añadir un mensaje inline si lo deseas, pero para una barra pequeña,
-      // quizás solo un log en consola sea suficiente o se maneje en la página principal del carrito.
     }
   };
 
@@ -148,7 +133,6 @@ const BarraCarrito = () => {
               {itemsMostrados.map(item => (
                 <li key={item.id} className="carrito-item">
                   <div className="item-visual">
-                    {/* Muestra la imagen construyendo la URL desde el backend estático */}
                     {item.imagen ? (
                       <img
                         src={`${STATIC_IMAGES_BASE_URL}${item.imagen}`}

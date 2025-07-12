@@ -2,25 +2,22 @@ import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import '../../../css/EliminarNoticia.css'; 
 
-// Estructura Eliminar Noticia Props (DEFINICIÓN CONSISTENTE)
+// Estructura Eliminar Noticia Props
 interface EliminarNoticiaProps {
   noticiaId: number; 
   nombreNoticia: string; 
   onCerrar: () => void; 
-  onEliminar: (id: number) => Promise<void>; // <-- CORRECCIÓN: onEliminar es Promise<void>
-  onShowMessage: (type: 'success' | 'danger', text: string) => void; // *** AÑADIDO: Prop para mostrar mensajes ***
+  onEliminar: (id: number) => Promise<void>;
+  onShowMessage: (type: 'success' | 'danger', text: string) => void; 
   show: boolean;
 }
 
-// *** AÑADIDO: 'onShowMessage' a las props desestructuradas ***
 const EliminarNoticia: React.FC<EliminarNoticiaProps> = ({ noticiaId, nombreNoticia, onCerrar, onEliminar, onShowMessage, show }) => {
-  const handleConfirm = async () => { // <-- CORRECCIÓN: Función asíncrona
+  const handleConfirm = async () => {
     try {
-      await onEliminar(noticiaId); // <-- CORRECCIÓN: await porque onEliminar es Promise<void>
-      // El modal se cerrará automáticamente en el padre después de refreshNoticias
-    } catch (error: any) { // Añadido : any para tipar el error
+      await onEliminar(noticiaId);
+    } catch (error: any) { 
       console.error("Error al eliminar noticia desde el modal:", error);
-      // *** MODIFICADO: Reemplazado alert() por onShowMessage() ***
       onShowMessage('danger', `Error al eliminar noticia: ${error.message}`); 
     }
   };
