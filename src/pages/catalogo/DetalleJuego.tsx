@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
+import jwt_decode from 'jwt-decode';
 import '../../css/DetalleJuego.css';
 import { handleAgregarAlCarrito } from '../carrito/DetalleCarrito';
 // Imágenes para galerías
@@ -116,6 +117,7 @@ import ARK1 from '../../imagenes/Juegos/ARK1.jpg'
 import ARK2 from '../../imagenes/Juegos/ARK2.jpg'
 import ARK3 from '../../imagenes/Juegos/ARK3.jpg'
 import ARK4 from '../../imagenes/Juegos/ARK4.jpg'
+import { useNavigate } from 'react-router-dom';
 
 
 // Interfaces de tipos
@@ -656,26 +658,100 @@ interface DetalleJuegoProps {
 
 // Componente principal
 function DetalleJuego({ juego, show, onHide, onAddComment }: DetalleJuegoProps) {
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [usuarioRating, setUsuarioRating] = useState(5);
+  const [isPurchased, setIsPurchased] = useState<boolean | null>(null);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
-  if (!juego) return null;
+  useEffect(() => {
+    const obtenerUsuarioId = () => {
+      const token = localStorage.getItem('userToken');
+      if (token) {
+        try {
+          const decoded: any = jwt_decode(token); // Decodificar el token
+          setUsuarioId(decoded.id); // Establecer el usuarioId desde el token
+        } catch (error) {
+          console.error('Error al decodificar el token JWT', error);
+        }
+      }
+    };
+
+    obtenerUsuarioId();
+  }, []);
+
+  useEffect(() => {
+    const checkPurchase = async () => {
+      try {
+        if (!usuarioId) {
+          setIsPurchased(false);
+          return;
+        }
+
+        const response = await fetch('http://localhost:3001/api/calificaciones/verificarCompra', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            Usuario_UsuarioID: usuarioId,
+            Juego_JuegoID: juego.id,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.comprado) {
+          setIsPurchased(true); // Si la compra es exitosa, permitir dejar calificación
+        } else {
+          setIsPurchased(false); // Si no ha comprado, bloquear
+        }
+      } catch (error) {
+        console.error('Error al verificar la compra:', error);
+        setIsPurchased(false);
+      }
+    };
+
+    if (juego) {
+      checkPurchase();
+    }
+  }, [juego, usuarioId]); // Ejecutar cuando el juego o usuario cambien
+
+  const handleAddComment = async () => {
+    if (nuevoComentario.trim() === '') return;
+
+    try {
+      const response = await fetch('http://localhost:3001/api/calificaciones/dejarCalificacion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Usuario_UsuarioID: usuarioId, // ID del usuario
+          Juego_JuegoID: juego.id, // ID del juego
+          Valoracion: usuarioRating, // Puntuación
+          Comentario: nuevoComentario, // Comentario
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        onAddComment(juego.id, {
+          user: "Tú",
+          rating: usuarioRating,
+          text: nuevoComentario,
+        });
+        setNuevoComentario(''); // Limpiar comentario
+      } else {
+        console.error('Error al dejar la calificación:', data.error);
+      }
+    } catch (error) {
+      console.error('Error al enviar la reseña:', error);
+    }
+  };
 
   const handleRatingClick = (rating: number) => {
     setUsuarioRating(rating);
-  };
-
-  const handleAddComment = () => {
-    if (nuevoComentario.trim() === '') return;
-    
-    onAddComment(juego.id, {
-      user: "Tú",
-      rating: usuarioRating,
-      text: nuevoComentario
-    });
-    
-    setNuevoComentario('');
   };
 
   return (
@@ -684,115 +760,8 @@ function DetalleJuego({ juego, show, onHide, onAddComment }: DetalleJuegoProps) 
         <Modal.Title className="custom-modal-title">{juego.nombre}</Modal.Title>
       </Modal.Header>
       <Modal.Body className="custom-modal-body">
-        <div className="row mt-5">
-          {/* Trailer del juego */}
-          <div className="col-md-6 d-flex flex-column">
-            <div className="ratio ratio-16x9 mb-3">
-              <iframe 
-                src={juego.trailerUrl} 
-                title={`${juego.nombre} Trailer`} 
-                allowFullScreen
-                className="custom-iframe"
-              ></iframe>
-            </div>
-            
-            {/* Galería de imágenes */}
-            <div className="mt-3">
-              <h6 className="custom-gallery-title">Galería</h6>
-              <div className="row row-cols-4 g-2">
-                {juego.galleryImages.map((img, index) => (
-                  <div className="col" key={index}>
-                    <img 
-                      src={img} 
-                      alt={`${juego.nombre} ${index + 1}`} 
-                      className="img-thumbnail cursor-pointer custom-image-thumbnail" 
-                      style={{ width: '100%', height: '100px', objectFit: 'cover' }}
-                      onClick={() => setExpandedImage(img)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* Aquí va todo el contenido del juego */}
 
-          {/* Modal para imagen ampliada */}
-          <Modal show={expandedImage !== null} onHide={() => setExpandedImage(null)} centered size="xl">
-            <Modal.Header closeButton>
-              <Modal.Title>{juego.nombre}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="text-center">
-              <img 
-                src={expandedImage || ''} 
-                alt="Ampliación" 
-                className="img-fluid" 
-                style={{ maxHeight: '70vh' }}
-              />
-            </Modal.Body>
-          </Modal>
-
-          {/* Descripción del juego */}
-          <div className="col-md-6 d-flex flex-column">
-            <h6 className="custom-description-title">Descripción</h6>
-            <p className="custom-description-text">{juego.descripcionLarga}</p>
-
-            <div className="mb-3">
-            <h6 className="custom-release-date-title">Fecha de lanzamiento</h6>
-            <p className="custom-release-date-text">{juego.lanzamiento}</p>
-            </div>
-
-            <div className="mb-3">
-              <h6 className="custom-platforms-title">Plataformas</h6>
-              <div>
-                {juego.plataformas.map((plataforma) => (
-                  <span key={plataforma} className="badge bg-secondary me-1">{plataforma}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <h6 className="custom-features-title">Características</h6>
-              <ul className="list-unstyled custom-features-list">
-                {juego.caracteristicas.map((caracteristica, index) => (
-                  <li key={index} className="custom-feature-item">{caracteristica}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mb-3">
-              <h6 className="custom-genres-title">Géneros</h6>
-              <div>
-                {juego.generos.map((genero) => (
-                  <span key={genero} className="badge bg-info me-1">{genero}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="d-flex flex-grow-1 align-items-center justify-content-between mb-0">
-              <div>
-                <h6 className="mb-0 custom-price-text">Precio: S/ {juego.precio.toFixed(2)}</h6>
-                {juego.descuento > 0 && (
-                  <small className="text-danger custom-discount-text">
-                    {juego.descuento}% de descuento
-                  </small>
-                )}
-              </div>
-              <button
-                className="btn btn-sm btn-primary"
-                data-id={juego.id}
-                data-nombre={juego.nombre}
-                data-precio={juego.precio.toFixed(2)}
-                data-imagen={juego.imagen}
-                onClick={handleAgregarAlCarrito}
-                >
-                Agregar al carrito
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div id="toast" className="toast"></div>
-           
-        {/* Reseñas */}
         <div className="mt-4">
           <h5 className="custom-reviews-title">Reseñas</h5>
           {juego.comentarios.map((comentario) => (
@@ -802,8 +771,8 @@ function DetalleJuego({ juego, show, onHide, onAddComment }: DetalleJuegoProps) 
                   <h6 className="card-title custom-review-user">{comentario.user}</h6>
                   <div>
                     {[...Array(5)].map((_, i) => (
-                      <i 
-                        key={i} 
+                      <i
+                        key={i}
                         className={`bi ${i < comentario.rating ? 'bi-star-fill text-warning' : 'bi-star'} custom-review-star`}
                       ></i>
                     ))}
@@ -814,16 +783,16 @@ function DetalleJuego({ juego, show, onHide, onAddComment }: DetalleJuegoProps) 
               </div>
             </div>
           ))}
-          
-          {/* Añadir reseña */}
-          {(
+
+          {/* Mostrar el formulario de reseña solo si el juego ha sido comprado */}
+          {isPurchased && (
             <div className="mt-4 custom-add-review">
               <h5 className="custom-reviews-title">Añadir tu reseña</h5>
               <div className="mb-3">
                 <label className="form-label text-white">Puntuación</label>
                 <div>
                   {[...Array(5)].map((_, i) => (
-                    <i 
+                    <i
                       key={i}
                       className={`bi ${i < usuarioRating ? 'bi-star-fill text-warning' : 'bi-star'} fs-4 me-1 custom-rating-star`}
                       style={{ cursor: 'pointer' }}
@@ -833,15 +802,15 @@ function DetalleJuego({ juego, show, onHide, onAddComment }: DetalleJuegoProps) 
                 </div>
               </div>
               <div className="mb-3">
-                <textarea 
-                  className="form-control custom-review-textarea" 
-                  rows={3} 
+                <textarea
+                  className="form-control custom-review-textarea"
+                  rows={3}
                   placeholder="Escribe tu reseña..."
                   value={nuevoComentario}
                   onChange={(e) => setNuevoComentario(e.target.value)}
                 ></textarea>
               </div>
-              <button 
+              <button
                 className="btn btn-danger custom-submit-review-button"
                 onClick={handleAddComment}
                 disabled={!nuevoComentario.trim()}
