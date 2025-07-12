@@ -71,7 +71,7 @@ function Pago() {
   
     // Enviar datos al backend para procesar el pago
     try {
-      const response = await fetch('http://localhost:3001/api/pago', {
+      const response = await fetch('http://localhost:3001/api/realizar', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
