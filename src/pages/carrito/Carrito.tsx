@@ -25,7 +25,7 @@ function CarritoPage() {
   const [inlineMessage, setInlineMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
   const API_BASE_URL = 'http://localhost:3001/api/carrito'; 
-  const STATIC_IMAGES_BASE_URL = 'http://localhost:3001/static/'; 
+  const STATIC_IMAGES_BASE_URL = 'http://localhost:3001/static/';
 
   // Helper para obtener el token JWT del localStorage
   const getAuthHeaders = (): HeadersInit => {
@@ -217,8 +217,37 @@ function CarritoPage() {
     }
   };
 
-  const handleFinalizarCompra = () => {
-    navigate('/Pago');
+  const handleFinalizarCompra = async () => {
+    const headers = getAuthHeaders(); // Obtener encabezados con el token JWT
+    const body = JSON.stringify({
+      usuarioId: parseInt(localStorage.getItem('userId') || ''),
+      carritoItems: carritoItems.map(item => ({
+        juegoId: item.id,
+        cantidad: item.cantidad,
+      })),
+    });
+  
+    try {
+      const response = await fetch('http://localhost:3001/api/pago', {
+        method: 'POST',
+        headers,
+        body,
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Error al realizar el pago.');
+      }
+  
+      // Si el pago se procesa correctamente, redirigir al usuario
+      showInlineMessage('success', 'Pago realizado exitosamente.');
+      setTimeout(() => {
+        navigate('/Pago'); // Redirigir a una página de confirmación
+      }, 2000);
+    } catch (err: any) {
+      console.error("Error al finalizar compra:", err);
+      showInlineMessage('danger', err.message || 'Error al realizar el pago.');
+    }
   };
 
   // ==========================================================

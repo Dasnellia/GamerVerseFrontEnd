@@ -35,9 +35,36 @@ function Perfil() {
     }
   };
 
-  const manejarGuardarCambios = (evento: FormEvent<HTMLButtonElement>) => {
+  const manejarGuardarCambios = async (evento: FormEvent<HTMLButtonElement>) => {
     evento.preventDefault();
     setModalVisible(true);
+
+    const usuarioId = parseInt(localStorage.getItem('userId') || '0'); //como se obtiene usuarioId?
+
+    try {
+      // Enviar los cambios al backend
+      const response = await fetch(`http://localhost:3001/api/usuarios/${usuarioId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre,
+          apellidos,
+          correoElectronico,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Información actualizada:', data);
+      } else {
+        const errorData = await response.json();
+        console.error('Error al actualizar la información:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error en la solicitud de actualización de perfil:', error);
+    }
   };
 
   const manejarCierreModal = () => {

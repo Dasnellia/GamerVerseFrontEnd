@@ -7,6 +7,15 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../../css/Pago.css';
 import '../../css/PagoPerfilModal.css';
 
+export interface CarritoItem {
+  id: number; 
+  nombre: string;
+  precio: number;
+  cantidad: number;
+  imagen: string | null; 
+  stockDisponible: number; 
+}
+
 function Pago() {
   const [modalVisible, setModalVisible] = useState(false);
   const [nombre, setNombre] = useState('');
@@ -14,12 +23,78 @@ function Pago() {
   const [numeroTarjeta, setNumeroTarjeta] = useState('');
   const [cvc, setCvc] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
+  const [carritoItems, setCarritoItems] = useState<CarritoItem[]>([]);
+  const [inlineMessage, setInlineMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
   const navigate = useNavigate();
 
-  const handlePagar = () => {
-    console.log('Realizando pago con los datos:', { nombre, direccion, numeroTarjeta, cvc, fechaVencimiento });
-    setModalVisible(true);
+  const getAuthHeaders = (): HeadersInit => {
+    // *** CORRECCIÓN REVERTIDA: Ahora buscamos 'userToken' nuevamente. ***
+    const token = localStorage.getItem('userToken'); 
+    console.log('DEBUG: getAuthHeaders - Token recuperado de localStorage (userToken):', token ? 'Presente' : 'Ausente'); 
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      (headers as Record<string, string>).Authorization = `Bearer ${token}`; 
+      console.log('DEBUG: getAuthHeaders - Encabezado Authorization configurado.'); 
+    } else {
+      console.log('DEBUG: getAuthHeaders - No se encontró token en localStorage. Encabezado Authorization NO configurado.'); 
+    }
+    return headers; 
+  };
+
+  // Función para mostrar mensajes inline
+  const showInlineMessage = (type: 'success' | 'danger', text: string) => {
+    setInlineMessage({ type, text });
+    setTimeout(() => {
+      setInlineMessage(null);
+    }, 5000); 
+  };
+
+  const handlePagar = async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      showInlineMessage('danger', 'No se pudo realizar el pago, por favor inicia sesión.');
+      return;
+    }
+  
+    // Datos del pago
+    const pagoData = {
+      nombre,
+      direccion,
+      numeroTarjeta,
+      cvc,
+      fechaVencimiento,
+    };
+  
+    // Enviar datos al backend para procesar el pago
+    try {
+      const response = await fetch('http://localhost:3001/api/pago', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          usuarioId: parseInt(localStorage.getItem('userId') || ''),
+          carritoItems: carritoItems.map(item => ({
+            juegoId: item.id,
+            cantidad: item.cantidad,
+          })),
+          ...pagoData,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Error al procesar el pago.');
+      }
+  
+      // Mostrar modal de pago exitoso
+      setModalVisible(true);
+      console.log('Pago realizado exitosamente');
+    } catch (error: any) {
+      console.error("Error al procesar el pago:", error);
+    }
   };
 
   const handleCloseModal = () => {
