@@ -23,20 +23,30 @@ function IniciarSesion() {
       if (respuesta && respuesta.error) {
         setMensajeError(respuesta.error);
       } else if (respuesta && respuesta.token && respuesta.usuario) {
-        // *** CAMBIO CLAVE AQUÍ: Usamos 'userToken' para TODOS los tokens ***
-        localStorage.setItem('userToken', respuesta.token);
+        // *** ESTE ES EL CAMBIO MÁS IMPORTANTE ***
+        const tipo = respuesta.usuario.tipo; // Obtiene el rol del usuario de la respuesta
+
+        if (tipo === 'admin') {
+            localStorage.setItem('adminToken', respuesta.token); // <-- ¡GUARDAR COMO ADMIN TOKEN!
+            console.log('Token de administrador guardado en localStorage.');
+        } else {
+            localStorage.setItem('userToken', respuesta.token); // <-- Guardar como userToken para otros roles
+            console.log('Token de usuario guardado en localStorage.');
+        }
+
+        // Guarda el resto de la información del usuario, común para ambos roles
         localStorage.setItem('userNickname', respuesta.usuario.nickname);
         localStorage.setItem('userId', respuesta.usuario.id);
-        localStorage.setItem('userRole', respuesta.usuario.tipo); // Guarda el rol del usuario
+        localStorage.setItem('userRole', tipo); // Guarda el rol del usuario (admin o user)
         localStorage.setItem('userEmail', respuesta.usuario.correo || '');
         localStorage.setItem('userPhoto', respuesta.usuario.foto || '');
 
         console.log('Inicio de sesión exitoso. Datos guardados en localStorage.');
-        console.log('Rol del usuario:', respuesta.usuario.tipo); // Verifica que el rol se guarda correctamente
+        console.log('Rol del usuario:', tipo); // Confirma el rol
 
-        const tipo = respuesta.usuario.tipo;
+        // Redirección basada en el rol
         if (tipo === 'admin') {
-          navegar('/ListadoUsuarios');
+          navegar('/ListadoUsuarios'); // Redirige al panel de administrador
         } else {
           navegar('/Inicio'); // Asumo que esta es la ruta para usuarios normales
         }
